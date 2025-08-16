@@ -11,10 +11,6 @@
     <link rel="stylesheet" href="styles/components.css">
     <link rel="stylesheet" href="styles/effects.css">
     
-    <!-- Preload key resources for better performance -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    
     <!-- Meta tags for better SEO and social sharing -->
     <meta name="description" content="High-intensity knowledge-based Tic-Tac-Toe with explosive gameplay mechanics">
     <meta name="keywords" content="tic-tac-toe, trivia, game, blitz, knowledge, timer">
@@ -32,8 +28,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 </head>
 <body>
+    <!-- START SCREEN -->
+    <div class="overlay start-screen" id="startScreen" aria-hidden="true">
+        <div class="overlay-content">
+            <h1 class="start-title">TIC-TAC-TOE BLITZ</h1>
+            <p class="start-subtitle">Fast-paced tic-tac-toe with knowledge challenges!</p>
+            <div class="start-features">
+                <div class="feature-item">⏰ 5-second timer pressure</div>
+                <div class="feature-item">💣 Random bomb questions</div>
+                <div class="feature-item">❤️ 3 lives per player</div>
+                <div class="feature-item">🧠 Knowledge saves lives</div>
+            </div>
+            <div class="start-buttons">
+                <button class="control-btn start-btn" id="startGameBtn" type="button">
+                    🎮 START GAME
+                </button>
+                <button class="control-btn start-btn" id="quickStartBtn" type="button">
+                    ⚡ QUICK START
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div class="game-container">
-        <!-- Game Controls Header -->
+        <!-- ENHANCED Game Controls Header with End Game Button -->
         <header class="game-controls">
             <div class="control-group-left">
                 <button class="control-btn" id="newGameBtn" type="button">
@@ -42,12 +60,15 @@
                 <button class="control-btn" id="pauseBtn" type="button">
                     ⏸️ PAUSE
                 </button>
+                <button class="control-btn end-game" id="endGameBtn" type="button">
+                    🛑 END GAME
+                </button>
             </div>
             <div class="control-group-right">
                 <button class="control-btn" id="settingsBtn" type="button">
                     ⚙️ SETTINGS
                 </button>
-                <button class="control-btn active" id="soundToggle" type="button">
+                <button class="control-btn active" id="soundBtn" type="button">
                     🔊 SOUND ON
                 </button>
             </div>
@@ -58,10 +79,10 @@
             <h1 class="game-title">TIC-TAC-TOE BLITZ</h1>
         </div>
 
-        <!-- UPDATED: Lives Section with Timer Integrated -->
+        <!-- Lives Section with Integrated Timer -->
         <div class="lives-section">
             <!-- Player X Lives -->
-            <div class="player-lives player-x-lives">
+            <div class="player-lives player-x-lives" id="playerXLives">
                 <div class="player-label">Player X</div>
                 <div class="lives-container">
                     <div class="heart" data-life="1" data-player="X">❤️</div>
@@ -70,7 +91,7 @@
                 </div>
             </div>
 
-            <!-- Timer Section - NOW INSIDE lives-section -->
+            <!-- Timer Section - Centered and Prominent -->
             <div class="timer-section">
                 <div class="timer-display" id="timerDisplay">
                     <div class="timer-text" id="timerText">Player X's Turn</div>
@@ -82,7 +103,7 @@
             </div>
 
             <!-- Player O Lives -->
-            <div class="player-lives player-o-lives">
+            <div class="player-lives player-o-lives" id="playerOLives">
                 <div class="player-label">Player O</div>
                 <div class="lives-container">
                     <div class="heart" data-life="1" data-player="O">❤️</div>
@@ -92,7 +113,7 @@
             </div>
         </div>
 
-        <!-- Game Board - Clean and Separated -->
+        <!-- MAXIMIZED Game Board - Main Focus -->
         <main class="game-board-container">
             <div class="game-board" id="gameBoard">
                 <!-- Row 0 -->
@@ -129,12 +150,43 @@
                 </div>
             </div>
         </main>
+
+        <!-- CRITICAL: ALWAYS VISIBLE Statistics Section -->
+        <footer class="stats-container" id="statsContainer">
+            <div class="stats-title">
+                📊 Game Statistics
+                <button class="clear-stats-btn" id="clearStatsBtn" type="button" title="Clear all statistics">🗑️</button>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-label">Games Played</span>
+                    <span class="stat-value" id="gamesPlayed">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">X Wins</span>
+                    <span class="stat-value" id="playerXWins">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">O Wins</span>
+                    <span class="stat-value" id="playerOWins">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Ties</span>
+                    <span class="stat-value" id="ties">0</span>
+                </div>
+            </div>
+        </footer>
     </div>
 
     <!-- Question Modal -->
     <div class="modal question-modal" id="questionModal" role="dialog" aria-labelledby="questionText" aria-hidden="true">
         <div class="modal-backdrop" onclick="closeModal('questionModal')"></div>
         <div class="modal-content question-content">
+            <div class="question-header">
+                <h3 id="questionPlayerName">Player X</h3>
+                <p>Answer this question to save your life!</p>
+            </div>
+            
             <div class="question-text" id="questionText" role="heading" aria-level="2">
                 <!-- Question text will be inserted here -->
             </div>
@@ -172,7 +224,7 @@
                 <button class="control-btn" id="playAgainBtn" type="button">
                     🔄 PLAY AGAIN
                 </button>
-                <button class="control-btn" id="newGameFromOverBtn" type="button">
+                <button class="control-btn" id="newGameFromModalBtn" type="button">
                     🎮 NEW GAME
                 </button>
             </div>
@@ -221,8 +273,8 @@
                 <div class="settings-section-title">Audio & Visual</div>
                 <div class="settings-options">
                     <div class="setting-item">
-                        <label for="soundEffectsToggle">Sound Effects</label>
-                        <input type="checkbox" id="soundEffectsToggle" name="soundEffects" checked>
+                        <label for="soundToggle">Sound Effects</label>
+                        <input type="checkbox" id="soundToggle" name="soundEffects" checked>
                     </div>
                     <div class="setting-item">
                         <label for="musicToggle">Background Music</label>
@@ -232,10 +284,6 @@
                         <label for="animationsToggle">Animations</label>
                         <input type="checkbox" id="animationsToggle" name="animations" checked>
                     </div>
-                    <div class="setting-item">
-                        <label for="volumeSlider">Volume</label>
-                        <input type="range" id="volumeSlider" name="volume" min="0" max="100" value="70">
-                    </div>
                 </div>
             </div>
 
@@ -243,8 +291,8 @@
                 <button class="control-btn" id="saveSettingsBtn" type="button">
                     💾 SAVE
                 </button>
-                <button class="control-btn" id="cancelSettingsBtn" type="button">
-                    ❌ CANCEL
+                <button class="control-btn" id="closeSettingsBtn" type="button">
+                    ❌ CLOSE
                 </button>
             </div>
         </div>
@@ -264,7 +312,7 @@
     <!-- Notification Container -->
     <div id="notificationContainer" aria-live="polite" aria-atomic="true"></div>
 
-    <!-- Loading Overlay (for future use) -->
+    <!-- Loading Overlay -->
     <div class="overlay loading-overlay" id="loadingOverlay" style="display: none;" aria-hidden="true">
         <div class="overlay-content">
             <div class="spinner"></div>
@@ -276,113 +324,14 @@
     <div class="sr-only" aria-live="polite" id="gameStatus"></div>
     <div class="sr-only" aria-live="assertive" id="gameAlerts"></div>
 
-    <!-- Temporary demo script for showcasing design -->
-    <script>
-        // Demo functionality to showcase the design
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🎮 Tic-Tac-Toe Blitz Design Demo Loaded!');
-            
-            // Demo timer animation
-            let timerValue = 5.0;
-            const timerCountdown = document.getElementById('timerCountdown');
-            const timerBar = document.getElementById('timerBar');
-            const timerDisplay = document.getElementById('timerDisplay');
-            
-            function updateTimer() {
-                timerValue -= 0.1;
-                if (timerValue <= 0) timerValue = 5.0;
-                
-                timerCountdown.textContent = timerValue.toFixed(1);
-                const percentage = (timerValue / 5.0) * 100;
-                timerBar.style.width = percentage + '%';
-                
-                // Update timer state classes
-                timerDisplay.classList.remove('warning', 'critical');
-                timerCountdown.classList.remove('warning', 'critical');
-                timerBar.classList.remove('warning', 'critical');
-                
-                if (timerValue <= 1) {
-                    timerDisplay.classList.add('critical');
-                    timerCountdown.classList.add('critical');
-                    timerBar.classList.add('critical');
-                } else if (timerValue <= 2) {
-                    timerDisplay.classList.add('warning');
-                    timerCountdown.classList.add('warning');
-                    timerBar.classList.add('warning');
-                }
-            }
-            
-            setInterval(updateTimer, 100);
-            
-            // Demo cell interactions
-            document.querySelectorAll('.cell').forEach((cell, index) => {
-                cell.addEventListener('click', function() {
-                    console.log(`Cell clicked: ${this.dataset.row},${this.dataset.col}`);
-                    
-                    // Demo: randomly show different cell states
-                    const states = ['', 'X', 'O', '💣', '?'];
-                    const classes = ['', 'player-x', 'player-o', 'bomb', 'cached-question'];
-                    const randomState = Math.floor(Math.random() * states.length);
-                    
-                    this.textContent = states[randomState];
-                    this.className = 'cell ' + classes[randomState];
-                });
-            });
-            
-            // Demo button interactions
-            document.getElementById('newGameBtn')?.addEventListener('click', () => {
-                console.log('New Game clicked');
-                location.reload();
-            });
-            
-            document.getElementById('pauseBtn')?.addEventListener('click', () => {
-                console.log('Pause clicked');
-                document.getElementById('pausedOverlay').classList.toggle('show');
-            });
-            
-            document.getElementById('settingsBtn')?.addEventListener('click', () => {
-                console.log('Settings clicked');
-                document.getElementById('settingsModal').classList.add('show');
-            });
-            
-            document.getElementById('soundToggle')?.addEventListener('click', function() {
-                console.log('Sound toggle clicked');
-                this.classList.toggle('active');
-                this.classList.toggle('muted');
-                this.textContent = this.classList.contains('muted') ? '🔇 SOUND OFF' : '🔊 SOUND ON';
-            });
-            
-            // Modal close functionality
-            window.closeModal = function(modalId) {
-                document.getElementById(modalId).classList.remove('show');
-            };
-            
-            // Close modals with Escape key
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') {
-                    document.querySelectorAll('.modal.show').forEach(modal => {
-                        modal.classList.remove('show');
-                    });
-                    document.getElementById('pausedOverlay').classList.remove('show');
-                }
-            });
-            
-            // Settings modal buttons
-            document.getElementById('saveSettingsBtn')?.addEventListener('click', () => {
-                console.log('Settings saved');
-                closeModal('settingsModal');
-            });
-            
-            document.getElementById('cancelSettingsBtn')?.addEventListener('click', () => {
-                console.log('Settings cancelled');
-                closeModal('settingsModal');
-            });
-            
-            // Pause overlay click to resume
-            document.getElementById('pausedOverlay')?.addEventListener('click', () => {
-                document.getElementById('pausedOverlay').classList.remove('show');
-            });
-        });
-    </script>
+    <!-- JavaScript Files - CORRECTED ORDER AND PATHS -->
+    <script src="js/questionsData.js"></script>  <!-- 1. Data first -->
+    <script src="js/question.js"></script>       <!-- 2. Question class -->
+    <script src="js/questionBank.js"></script>   <!-- 3. QuestionBank + QuestionUI -->
+    <script src="js/audio.js"></script>          <!-- 4. Audio system -->
+    <script src="js/ui.js"></script>             <!-- 5. UI helpers -->
+    <script src="js/board.js"></script>          <!-- 6. Board class -->
+    <script src="js/game.js"></script>           <!-- 7. Game class (depends on above) -->
+    <script src="js/app.js"></script>            <!-- 8. App (depends on Game) -->
 </body>
 </html>
