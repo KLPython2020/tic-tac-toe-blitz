@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic-Tac-Toe Blitz</title>
+    
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="styles/base.css">
+    <link rel="stylesheet" href="styles/layout.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/effects.css">
+    
+    <!-- Preload key resources for better performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Meta tags for better SEO and social sharing -->
+    <meta name="description" content="High-intensity knowledge-based Tic-Tac-Toe with explosive gameplay mechanics">
+    <meta name="keywords" content="tic-tac-toe, trivia, game, blitz, knowledge, timer">
+    <meta name="author" content="Tic-Tac-Toe Blitz">
+    
+    <!-- Open Graph meta tags -->
+    <meta property="og:title" content="Tic-Tac-Toe Blitz">
+    <meta property="og:description" content="A high-intensity, knowledge-based twist on classic Tic-Tac-Toe">
+    <meta property="og:type" content="website">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    
+    <!-- Prevent zoom on mobile -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+</head>
+<body>
+    <div class="game-container">
+        <!-- Game Controls Header -->
+        <header class="game-controls">
+            <div class="control-group-left">
+                <button class="control-btn" id="newGameBtn" type="button">
+                    🎮 NEW GAME
+                </button>
+                <button class="control-btn" id="pauseBtn" type="button">
+                    ⏸️ PAUSE
+                </button>
+            </div>
+            <div class="control-group-right">
+                <button class="control-btn" id="settingsBtn" type="button">
+                    ⚙️ SETTINGS
+                </button>
+                <button class="control-btn active" id="soundToggle" type="button">
+                    🔊 SOUND ON
+                </button>
+            </div>
+        </header>
+
+        <!-- Game Title -->
+        <div class="game-header">
+            <h1 class="game-title">TIC-TAC-TOE BLITZ</h1>
+        </div>
+
+        <!-- UPDATED: Lives Section with Timer Integrated -->
+        <div class="lives-section">
+            <!-- Player X Lives -->
+            <div class="player-lives player-x-lives">
+                <div class="player-label">Player X</div>
+                <div class="lives-container">
+                    <div class="heart" data-life="1" data-player="X">❤️</div>
+                    <div class="heart" data-life="2" data-player="X">❤️</div>
+                    <div class="heart" data-life="3" data-player="X">❤️</div>
+                </div>
+            </div>
+
+            <!-- Timer Section - NOW INSIDE lives-section -->
+            <div class="timer-section">
+                <div class="timer-display" id="timerDisplay">
+                    <div class="timer-text" id="timerText">Player X's Turn</div>
+                    <div class="timer-countdown" id="timerCountdown">5.0</div>
+                    <div class="timer-bar-container">
+                        <div class="timer-bar" id="timerBar" style="width: 100%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Player O Lives -->
+            <div class="player-lives player-o-lives">
+                <div class="player-label">Player O</div>
+                <div class="lives-container">
+                    <div class="heart" data-life="1" data-player="O">❤️</div>
+                    <div class="heart" data-life="2" data-player="O">❤️</div>
+                    <div class="heart" data-life="3" data-player="O">❤️</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Board - Clean and Separated -->
+        <main class="game-board-container">
+            <div class="game-board" id="gameBoard">
+                <!-- Row 0 -->
+                <div class="cell" data-row="0" data-col="0" id="cell-0-0">
+                    <div class="cell-hover-effect"></div>
+                </div>
+                <div class="cell" data-row="0" data-col="1" id="cell-0-1">
+                    <div class="cell-hover-effect"></div>
+                </div>
+                <div class="cell" data-row="0" data-col="2" id="cell-0-2">
+                    <div class="cell-hover-effect"></div>
+                </div>
+                
+                <!-- Row 1 -->
+                <div class="cell" data-row="1" data-col="0" id="cell-1-0">
+                    <div class="cell-hover-effect"></div>
+                </div>
+                <div class="cell" data-row="1" data-col="1" id="cell-1-1">
+                    <div class="cell-hover-effect"></div>
+                </div>
+                <div class="cell" data-row="1" data-col="2" id="cell-1-2">
+                    <div class="cell-hover-effect"></div>
+                </div>
+                
+                <!-- Row 2 -->
+                <div class="cell" data-row="2" data-col="0" id="cell-2-0">
+                    <div class="cell-hover-effect"></div>
+                </div>
+                <div class="cell" data-row="2" data-col="1" id="cell-2-1">
+                    <div class="cell-hover-effect"></div>
+                </div>
+                <div class="cell" data-row="2" data-col="2" id="cell-2-2">
+                    <div class="cell-hover-effect"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Question Modal -->
+    <div class="modal question-modal" id="questionModal" role="dialog" aria-labelledby="questionText" aria-hidden="true">
+        <div class="modal-backdrop" onclick="closeModal('questionModal')"></div>
+        <div class="modal-content question-content">
+            <div class="question-text" id="questionText" role="heading" aria-level="2">
+                <!-- Question text will be inserted here -->
+            </div>
+            <div class="answer-options" id="answerOptions" role="group" aria-label="Answer choices">
+                <!-- Answer buttons will be generated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div class="modal game-over-modal" id="gameOverModal" role="dialog" aria-labelledby="gameOverTitle" aria-hidden="true">
+        <div class="modal-backdrop" onclick="closeModal('gameOverModal')"></div>
+        <div class="modal-content game-over-content">
+            <div class="game-over-title" id="gameOverTitle" role="heading" aria-level="1">
+                🏆 Game Over!
+            </div>
+            <div class="game-over-message" id="gameOverMessage">
+                <!-- Game result message will be inserted here -->
+            </div>
+            <div class="game-over-stats" id="gameOverStats" style="display: none;">
+                <div class="stat-item">
+                    <span>Questions Answered:</span>
+                    <span class="stat-value" id="questionsAnswered">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>Correct Answers:</span>
+                    <span class="stat-value" id="correctAnswers">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>Game Duration:</span>
+                    <span class="stat-value" id="gameDuration">0:00</span>
+                </div>
+            </div>
+            <div class="game-over-buttons">
+                <button class="control-btn" id="playAgainBtn" type="button">
+                    🔄 PLAY AGAIN
+                </button>
+                <button class="control-btn" id="newGameFromOverBtn" type="button">
+                    🎮 NEW GAME
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal settings-modal" id="settingsModal" role="dialog" aria-labelledby="settingsTitle" aria-hidden="true">
+        <div class="modal-backdrop" onclick="closeModal('settingsModal')"></div>
+        <div class="modal-content settings-content">
+            <div class="settings-title" id="settingsTitle" role="heading" aria-level="1">⚙️ Settings</div>
+            
+            <div class="settings-section">
+                <div class="settings-section-title">Game Settings</div>
+                <div class="settings-options">
+                    <div class="setting-item">
+                        <label for="timerDurationSelect">Timer Duration</label>
+                        <select id="timerDurationSelect" name="timerDuration">
+                            <option value="3">3 seconds</option>
+                            <option value="5" selected>5 seconds</option>
+                            <option value="7">7 seconds</option>
+                            <option value="10">10 seconds</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label for="startingLivesSelect">Starting Lives</label>
+                        <select id="startingLivesSelect" name="startingLives">
+                            <option value="1">1 life</option>
+                            <option value="3" selected>3 lives</option>
+                            <option value="5">5 lives</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label for="difficultySelect">Question Difficulty</label>
+                        <select id="difficultySelect" name="difficulty">
+                            <option value="easy" selected>Easy</option>
+                            <option value="medium">Medium</option>
+                            <option value="hard">Hard</option>
+                            <option value="mixed">Mixed</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <div class="settings-section-title">Audio & Visual</div>
+                <div class="settings-options">
+                    <div class="setting-item">
+                        <label for="soundEffectsToggle">Sound Effects</label>
+                        <input type="checkbox" id="soundEffectsToggle" name="soundEffects" checked>
+                    </div>
+                    <div class="setting-item">
+                        <label for="musicToggle">Background Music</label>
+                        <input type="checkbox" id="musicToggle" name="music">
+                    </div>
+                    <div class="setting-item">
+                        <label for="animationsToggle">Animations</label>
+                        <input type="checkbox" id="animationsToggle" name="animations" checked>
+                    </div>
+                    <div class="setting-item">
+                        <label for="volumeSlider">Volume</label>
+                        <input type="range" id="volumeSlider" name="volume" min="0" max="100" value="70">
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-buttons">
+                <button class="control-btn" id="saveSettingsBtn" type="button">
+                    💾 SAVE
+                </button>
+                <button class="control-btn" id="cancelSettingsBtn" type="button">
+                    ❌ CANCEL
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Paused Overlay -->
+    <div class="overlay paused-overlay" id="pausedOverlay" role="dialog" aria-labelledby="pausedText" aria-hidden="true">
+        <div class="overlay-content">
+            <div class="paused-text" id="pausedText">⏸️ PAUSED</div>
+            <div class="paused-subtitle">Click anywhere or press SPACE to resume</div>
+        </div>
+    </div>
+
+    <!-- Effects Container for Dynamic Animations -->
+    <div id="effectsContainer" aria-hidden="true"></div>
+
+    <!-- Notification Container -->
+    <div id="notificationContainer" aria-live="polite" aria-atomic="true"></div>
+
+    <!-- Loading Overlay (for future use) -->
+    <div class="overlay loading-overlay" id="loadingOverlay" style="display: none;" aria-hidden="true">
+        <div class="overlay-content">
+            <div class="spinner"></div>
+            <div style="margin-top: 20px;">Loading...</div>
+        </div>
+    </div>
+
+    <!-- Hidden elements for screen readers -->
+    <div class="sr-only" aria-live="polite" id="gameStatus"></div>
+    <div class="sr-only" aria-live="assertive" id="gameAlerts"></div>
+
+    <!-- Temporary demo script for showcasing design -->
+    <script>
+        // Demo functionality to showcase the design
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🎮 Tic-Tac-Toe Blitz Design Demo Loaded!');
+            
+            // Demo timer animation
+            let timerValue = 5.0;
+            const timerCountdown = document.getElementById('timerCountdown');
+            const timerBar = document.getElementById('timerBar');
+            const timerDisplay = document.getElementById('timerDisplay');
+            
+            function updateTimer() {
+                timerValue -= 0.1;
+                if (timerValue <= 0) timerValue = 5.0;
+                
+                timerCountdown.textContent = timerValue.toFixed(1);
+                const percentage = (timerValue / 5.0) * 100;
+                timerBar.style.width = percentage + '%';
+                
+                // Update timer state classes
+                timerDisplay.classList.remove('warning', 'critical');
+                timerCountdown.classList.remove('warning', 'critical');
+                timerBar.classList.remove('warning', 'critical');
+                
+                if (timerValue <= 1) {
+                    timerDisplay.classList.add('critical');
+                    timerCountdown.classList.add('critical');
+                    timerBar.classList.add('critical');
+                } else if (timerValue <= 2) {
+                    timerDisplay.classList.add('warning');
+                    timerCountdown.classList.add('warning');
+                    timerBar.classList.add('warning');
+                }
+            }
+            
+            setInterval(updateTimer, 100);
+            
+            // Demo cell interactions
+            document.querySelectorAll('.cell').forEach((cell, index) => {
+                cell.addEventListener('click', function() {
+                    console.log(`Cell clicked: ${this.dataset.row},${this.dataset.col}`);
+                    
+                    // Demo: randomly show different cell states
+                    const states = ['', 'X', 'O', '💣', '?'];
+                    const classes = ['', 'player-x', 'player-o', 'bomb', 'cached-question'];
+                    const randomState = Math.floor(Math.random() * states.length);
+                    
+                    this.textContent = states[randomState];
+                    this.className = 'cell ' + classes[randomState];
+                });
+            });
+            
+            // Demo button interactions
+            document.getElementById('newGameBtn')?.addEventListener('click', () => {
+                console.log('New Game clicked');
+                location.reload();
+            });
+            
+            document.getElementById('pauseBtn')?.addEventListener('click', () => {
+                console.log('Pause clicked');
+                document.getElementById('pausedOverlay').classList.toggle('show');
+            });
+            
+            document.getElementById('settingsBtn')?.addEventListener('click', () => {
+                console.log('Settings clicked');
+                document.getElementById('settingsModal').classList.add('show');
+            });
+            
+            document.getElementById('soundToggle')?.addEventListener('click', function() {
+                console.log('Sound toggle clicked');
+                this.classList.toggle('active');
+                this.classList.toggle('muted');
+                this.textContent = this.classList.contains('muted') ? '🔇 SOUND OFF' : '🔊 SOUND ON';
+            });
+            
+            // Modal close functionality
+            window.closeModal = function(modalId) {
+                document.getElementById(modalId).classList.remove('show');
+            };
+            
+            // Close modals with Escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    document.querySelectorAll('.modal.show').forEach(modal => {
+                        modal.classList.remove('show');
+                    });
+                    document.getElementById('pausedOverlay').classList.remove('show');
+                }
+            });
+            
+            // Settings modal buttons
+            document.getElementById('saveSettingsBtn')?.addEventListener('click', () => {
+                console.log('Settings saved');
+                closeModal('settingsModal');
+            });
+            
+            document.getElementById('cancelSettingsBtn')?.addEventListener('click', () => {
+                console.log('Settings cancelled');
+                closeModal('settingsModal');
+            });
+            
+            // Pause overlay click to resume
+            document.getElementById('pausedOverlay')?.addEventListener('click', () => {
+                document.getElementById('pausedOverlay').classList.remove('show');
+            });
+        });
+    </script>
+</body>
+</html>

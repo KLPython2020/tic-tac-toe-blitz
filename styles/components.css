@@ -1,0 +1,441 @@
+/* components.css - Part 1: Buttons, Hearts, Timer, Game Board Cells */
+
+/* Control Buttons */
+.control-btn {
+    background: var(--glass-background);
+    backdrop-filter: var(--glass-backdrop);
+    border: 2px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    padding: 12px var(--spacing-lg);
+    color: white;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+    min-height: 44px;
+}
+
+.control-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.control-btn:active {
+    transform: translateY(0);
+}
+
+.control-btn.active {
+    background: rgba(76, 175, 80, 0.3);
+    border-color: #4CAF50;
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.3);
+}
+
+.control-btn.muted {
+    background: rgba(244, 67, 54, 0.3);
+    border-color: #f44336;
+    box-shadow: 0 0 20px rgba(244, 67, 54, 0.3);
+}
+
+.control-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Hearts/Lives */
+.heart {
+    width: 30px;
+    height: 30px;
+    background: var(--error-color);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: var(--font-size-sm);
+    transition: all var(--transition-normal);
+    animation: heartbeat 1.5s ease-in-out infinite;
+}
+
+.heart.lost {
+    background: #555;
+    animation: none;
+    transform: scale(0.8);
+    opacity: 0.6;
+}
+
+/* Timer Components */
+.timer-text {
+    color: white;
+    font-size: var(--font-size-md);
+    margin-bottom: var(--spacing-sm);
+    font-weight: 600;
+}
+
+.timer-countdown {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: var(--success-color);
+    margin-bottom: var(--spacing-md);
+    font-family: var(--font-mono);
+    transition: color var(--transition-normal);
+}
+
+.timer-countdown.warning {
+    color: var(--warning-color);
+}
+
+.timer-countdown.critical {
+    color: var(--critical-color);
+}
+
+.timer-bar-container {
+    width: 100%;
+    height: 12px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+}
+
+.timer-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--success-color), #44A08D);
+    width: 100%;
+    transition: width 0.1s linear, background var(--transition-normal);
+    border-radius: 6px;
+}
+
+.timer-bar.warning {
+    background: linear-gradient(90deg, var(--warning-color), #F57C00);
+}
+
+.timer-bar.critical {
+    background: linear-gradient(90deg, var(--critical-color), #d32f2f);
+}
+
+/* Timer State Classes */
+.timer-display.warning {
+    border-color: var(--warning-color);
+    animation: timerWarning 0.5s ease-in-out infinite alternate;
+}
+
+.timer-display.critical {
+    border-color: var(--critical-color);
+    animation: timerCritical 0.2s ease-in-out infinite alternate;
+}
+
+@keyframes timerWarning {
+    from { box-shadow: 0 0 20px rgba(255, 152, 0, 0.5); }
+    to { box-shadow: 0 0 30px rgba(255, 152, 0, 0.8); }
+}
+
+@keyframes timerCritical {
+    from { box-shadow: 0 0 20px rgba(244, 67, 54, 0.7); }
+    to { box-shadow: 0 0 40px rgba(244, 67, 54, 1); }
+}
+
+/* Game Board Cells */
+.cell {
+    width: clamp(70px, 12vw, 100px);
+    height: clamp(70px, 12vw, 100px);
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
+    font-weight: bold;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+    color: #333;
+}
+
+.cell:hover:not(.disabled) {
+    transform: scale(1.05);
+    box-shadow: var(--shadow-md);
+}
+
+.cell.disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.cell.bomb {
+    background: var(--bomb-gradient);
+    color: white;
+    animation: pulse 1s ease-in-out infinite;
+}
+
+.cell.cached-question {
+    background: var(--question-gradient);
+    color: #333;
+    animation: shimmer 2s ease-in-out infinite;
+}
+
+.cell.player-x {
+    background: var(--player-x-gradient);
+    color: white;
+}
+
+.cell.player-o {
+    background: var(--player-o-gradient);
+    color: white;
+}
+
+.cell.winning-cell {
+    animation: winningCell 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes winningCell {
+    from { 
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.7);
+        transform: scale(1.05);
+    }
+    to { 
+        box-shadow: 0 0 40px rgba(255, 215, 0, 1);
+        transform: scale(1.1);
+    }
+}
+/* components.css - Part 2: Modals, Forms, Responsive Design */
+
+/* Question Modal Components */
+.question-content {
+    padding: var(--spacing-xxl);
+    max-width: 600px;
+    width: 90%;
+    text-align: center;
+    color: white;
+}
+
+.question-text {
+    font-size: var(--font-size-xl);
+    margin-bottom: var(--spacing-xl);
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.answer-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+}
+
+.answer-btn {
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: var(--radius-md);
+    color: white;
+    font-size: var(--font-size-md);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    font-weight: 500;
+    text-align: left;
+}
+
+.answer-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+.answer-btn.correct {
+    background: rgba(76, 175, 80, 0.4);
+    border-color: #4CAF50;
+}
+
+.answer-btn.incorrect {
+    background: rgba(244, 67, 54, 0.4);
+    border-color: #f44336;
+}
+
+/* Game Over Modal */
+.game-over-content {
+    padding: var(--spacing-xxl);
+    text-align: center;
+    color: white;
+    min-width: 400px;
+}
+
+.game-over-title {
+    font-size: var(--font-size-xxl);
+    margin-bottom: var(--spacing-lg);
+    font-weight: bold;
+    background: linear-gradient(45deg, #FFD700, #FFA500);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.game-over-message {
+    font-size: var(--font-size-lg);
+    margin-bottom: var(--spacing-xl);
+    opacity: 0.9;
+}
+
+.game-over-buttons {
+    display: flex;
+    gap: var(--spacing-lg);
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* Settings Modal */
+.settings-content {
+    padding: var(--spacing-xxl);
+    min-width: 400px;
+    color: white;
+}
+
+.settings-title {
+    font-size: var(--font-size-xl);
+    margin-bottom: var(--spacing-xl);
+    text-align: center;
+    font-weight: bold;
+}
+
+.settings-options {
+    margin-bottom: var(--spacing-xl);
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-md);
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-sm);
+}
+
+.setting-item label {
+    font-weight: 600;
+    font-size: var(--font-size-md);
+}
+
+.setting-item select {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    color: white;
+    font-size: var(--font-size-sm);
+}
+
+.setting-item select option {
+    background: #333;
+    color: white;
+}
+
+.setting-item input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--success-color);
+}
+
+.settings-buttons {
+    display: flex;
+    gap: var(--spacing-lg);
+    justify-content: center;
+}
+
+/* Paused Overlay */
+.paused-overlay {
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+}
+
+.paused-text {
+    font-size: var(--font-size-huge);
+    font-weight: bold;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+    margin-bottom: var(--spacing-lg);
+}
+
+.paused-subtitle {
+    font-size: var(--font-size-lg);
+    opacity: 0.8;
+}
+
+/* Notification Toast */
+.notification-toast {
+    position: fixed;
+    top: var(--spacing-lg);
+    right: var(--spacing-lg);
+    background: var(--glass-background);
+    backdrop-filter: var(--glass-backdrop);
+    border: 2px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md) var(--spacing-lg);
+    color: white;
+    font-weight: 600;
+    z-index: var(--z-effects);
+    transform: translateX(100%);
+    opacity: 0;
+    transition: all var(--transition-normal);
+}
+
+.notification-toast.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .control-btn {
+        padding: 10px var(--spacing-md);
+        font-size: var(--font-size-xs);
+    }
+    
+    .timer-countdown {
+        font-size: 2rem;
+    }
+    
+    .cell {
+        font-size: 2rem;
+    }
+    
+    .question-content {
+        padding: var(--spacing-lg);
+    }
+    
+    .answer-options {
+        grid-template-columns: 1fr;
+    }
+    
+    .game-over-content,
+    .settings-content {
+        padding: var(--spacing-lg);
+        min-width: auto;
+    }
+    
+    .game-over-buttons,
+    .settings-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .heart {
+        width: 25px;
+        height: 25px;
+        font-size: var(--font-size-xs);
+    }
+    
+    .timer-countdown {
+        font-size: 1.8rem;
+    }
+    
+    .paused-text {
+        font-size: 2.5rem;
+    }
+}
