@@ -1,4 +1,4 @@
-// game.js - FIXED Browser-ready Game class with race condition prevention
+// game.js - UPDATED Browser-ready Game class with player question tracking
 class Game {
     constructor() {
         // Core game state
@@ -14,7 +14,7 @@ class Game {
         this.isGameActive = false
         this.isPaused = false
         
-        // NEW: Race condition prevention
+        // Race condition prevention
         this.isBoardFrozen = false
         this.isProcessingMove = false
         
@@ -75,15 +75,15 @@ class Game {
             }
         }
 
-        // Lives elements
+        // UPDATED: Lives elements to work with new player areas
         this.livesElements = {
             [this.BOARD.PLAYER1]: {
-                container: document.getElementById('playerXLives'),
-                hearts: document.querySelectorAll('#playerXLives .heart')
+                container: document.getElementById('playerXArea'),
+                hearts: document.querySelectorAll('#playerXArea .heart')
             },
             [this.BOARD.PLAYER2]: {
-                container: document.getElementById('playerOLives'),
-                hearts: document.querySelectorAll('#playerOLives .heart')
+                container: document.getElementById('playerOArea'),
+                hearts: document.querySelectorAll('#playerOArea .heart')
             }
         }
 
@@ -128,12 +128,6 @@ class Game {
         }
         if (this.controlButtons.pause) {
             this.controlButtons.pause.addEventListener('click', () => this.togglePause())
-        }
-        
-        // NEW: End Game button - handled by app.js, but bind here for completeness
-        const endGameBtn = document.getElementById('endGameBtn')
-        if (endGameBtn) {
-            console.log('🛑 End Game button found and ready')
         }
 
         // FIXED: Enhanced keyboard shortcuts
@@ -183,7 +177,7 @@ class Game {
     }
 
     /**
-     * NEW: Freeze board to prevent race conditions
+     * Freeze board to prevent race conditions
      */
     freezeBoard(reason = 'processing') {
         this.isBoardFrozen = true
@@ -195,7 +189,7 @@ class Game {
     }
 
     /**
-     * NEW: Unfreeze board
+     * Unfreeze board
      */
     unfreezeBoard() {
         this.isBoardFrozen = false
@@ -247,18 +241,6 @@ class Game {
         // Reset question bank available questions
         if (this.questionBank.rawQuestionData.length > 0) {
             this.questionBank.loadQuestions(this.questionBank.rawQuestionData)
-        }
-
-        // FIXED: Reset statistics display
-        this.triggerStatsUpdate()
-    }
-
-    /**
-     * FIXED: Trigger statistics update
-     */
-    triggerStatsUpdate() {
-        if (window.TicTacToeBlitzApp) {
-            window.TicTacToeBlitzApp.updateStatsDisplay()
         }
     }
 
@@ -331,7 +313,7 @@ class Game {
     }
 
     /**
-     * NEW: Trigger bomb reveal effect
+     * Trigger bomb reveal effect
      */
     triggerBombRevealEffect(row, col) {
         const cell = this.cellElements[row][col]
@@ -349,7 +331,7 @@ class Game {
     }
 
     /**
-     * Ask question - ENHANCED with better sound timing
+     * UPDATED: Ask question with player stat tracking
      */
     async askQuestion(row, col) {
         const cellKey = `${row},${col}`
@@ -377,6 +359,11 @@ class Game {
             // Show question modal and wait for answer
             const selectedAnswer = await this.questionUI.showQuestion(questionObj, this.currentPlayer)
             const isCorrect = questionObj.isCorrect(selectedAnswer)
+
+            // NEW: Track player-specific question stats
+            if (window.TicTacToeBlitzApp) {
+                window.TicTacToeBlitzApp.updatePlayerQuestionStats(this.currentPlayer, isCorrect)
+            }
 
             if (isCorrect) {
                 console.log("✅ Correct! You get the cell!")
@@ -455,7 +442,7 @@ class Game {
     }
 
     /**
-     * NEW: Continue next turn logic (separated for timer handling)
+     * Continue next turn logic (separated for timer handling)
      */
     continueNextTurn(penalty) {
         if (penalty) {
@@ -748,7 +735,7 @@ class Game {
     }
 
     /**
-     * Update lives display
+     * UPDATED: Update lives display with new player area structure
      */
     updateLives() {
         [this.BOARD.PLAYER1, this.BOARD.PLAYER2].forEach(player => {
@@ -768,14 +755,7 @@ class Game {
                 }
             })
 
-            // Highlight active player
-            if (livesData.container) {
-                if (player === this.currentPlayer && this.isGameActive && !this.isPaused) {
-                    livesData.container.classList.add('active')
-                } else {
-                    livesData.container.classList.remove('active')
-                }
-            }
+            // Highlight active player area (handled by app.js via onPlayerChange callback)
         })
     }
 

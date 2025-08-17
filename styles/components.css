@@ -1,6 +1,6 @@
-/* components.css - Part 1: Buttons, Hearts, Timer, Game Board Cells */
+/* components.css - UPDATED: Cleaned up for Issue 1 - Removed old stats, kept essential components */
 
-/* Control Buttons */
+/* UPDATED: Base Control Buttons (kept for modals and start screen) */
 .control-btn {
     background: var(--glass-background);
     backdrop-filter: var(--glass-backdrop);
@@ -29,25 +29,13 @@
     transform: translateY(0);
 }
 
-.control-btn.active {
-    background: rgba(76, 175, 80, 0.3);
-    border-color: #4CAF50;
-    box-shadow: 0 0 20px rgba(76, 175, 80, 0.3);
-}
-
-.control-btn.muted {
-    background: rgba(244, 67, 54, 0.3);
-    border-color: #f44336;
-    box-shadow: 0 0 20px rgba(244, 67, 54, 0.3);
-}
-
 .control-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
     transform: none;
 }
 
-/* Hearts/Lives */
+/* Hearts/Lives - UNCHANGED */
 .heart {
     width: 30px;
     height: 30px;
@@ -69,7 +57,7 @@
     opacity: 0.6;
 }
 
-/* Timer Components */
+/* Timer Components - UNCHANGED */
 .timer-text {
     color: white;
     font-size: var(--font-size-md);
@@ -140,7 +128,7 @@
     to { box-shadow: 0 0 40px rgba(244, 67, 54, 1); }
 }
 
-/* Game Board Cells */
+/* Game Board Cells - UNCHANGED */
 .cell {
     width: clamp(70px, 12vw, 100px);
     height: clamp(70px, 12vw, 100px);
@@ -204,9 +192,8 @@
         transform: scale(1.1);
     }
 }
-/* components.css - Part 2: Modals, Forms, Responsive Design */
 
-/* Start Screen Styles */
+/* Start Screen Styles - UNCHANGED */
 .start-screen {
     background: rgba(0, 0, 0, 0.9);
     backdrop-filter: blur(10px);
@@ -263,7 +250,7 @@
     min-width: 200px;
 }
 
-/* Question Header Styles */
+/* Question Header Styles - UNCHANGED */
 .question-header {
     text-align: center;
     margin-bottom: var(--spacing-xl);
@@ -283,55 +270,9 @@
     font-size: var(--font-size-md);
 }
 
-/* Statistics Styles */
-.stats-container {
-    background: rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(10px);
-    border-radius: var(--radius-lg);
-    padding: var(--spacing-lg);
-    margin-top: var(--spacing-lg);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    animation: slideInUp 0.6s ease 0.8s both;
-}
+/* REMOVED: All old .stats-container, .stats-grid, .stat-item styles since we eliminated bottom stats */
 
-.stats-title {
-    text-align: center;
-    font-size: var(--font-size-lg);
-    font-weight: bold;
-    color: white;
-    margin-bottom: var(--spacing-md);
-}
-
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: var(--spacing-md);
-}
-
-.stat-item {
-    background: rgba(255, 255, 255, 0.1);
-    padding: var(--spacing-md);
-    border-radius: var(--radius-sm);
-    text-align: center;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.stat-label {
-    display: block;
-    font-size: var(--font-size-sm);
-    color: rgba(255, 255, 255, 0.8);
-    margin-bottom: var(--spacing-xs);
-}
-
-.stat-value {
-    display: block;
-    font-size: var(--font-size-xl);
-    font-weight: bold;
-    color: var(--success-color);
-    font-family: var(--font-mono);
-}
-
-/* Enhanced Answer Button Feedback */
+/* Enhanced Answer Button Feedback - UNCHANGED */
 .answer-btn.disabled {
     opacity: 0.7;
     cursor: not-allowed;
@@ -363,7 +304,7 @@
     75% { transform: translateX(5px); }
 }
 
-/* Feedback Message Styles */
+/* Feedback Message Styles - UNCHANGED */
 .feedback-message {
     position: absolute;
     bottom: var(--spacing-lg);
@@ -396,17 +337,7 @@
     box-shadow: 0 4px 20px rgba(244, 67, 54, 0.3);
 }
 
-/* Timer Slider Value Display */
-#timerSliderValue {
-    background: rgba(255, 255, 255, 0.2);
-    padding: 2px 8px;
-    border-radius: 4px;
-    margin-left: var(--spacing-xs);
-    font-size: var(--font-size-xs);
-    font-weight: bold;
-}
-
-/* Modal Active States */
+/* Modal Active States - UNCHANGED */
 .modal.active {
     opacity: 1;
     visibility: visible;
@@ -421,7 +352,7 @@
     visibility: visible;
 }
 
-/* Enhanced Cell States */
+/* Enhanced Cell States - UNCHANGED */
 .cell.clickable {
     cursor: pointer;
 }
@@ -442,60 +373,7 @@
     75% { transform: translateX(3px); }
 }
 
-/* Player Active States */
-.player-lives.active {
-    transform: scale(1.05);
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
-    border-radius: var(--radius-sm);
-    transition: all var(--transition-normal);
-}
-
-.player-lives.active .player-label {
-    color: var(--success-color);
-    font-weight: bold;
-}
-
-/* Responsive Improvements */
-@media (max-width: 768px) {
-    .start-features {
-        grid-template-columns: 1fr;
-        max-width: 300px;
-    }
-    
-    .start-buttons {
-        flex-direction: column;
-        align-items: center;
-    }
-    
-    .start-btn {
-        min-width: 250px;
-    }
-    
-    .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .question-header h3 {
-        font-size: var(--font-size-lg);
-    }
-}
-
-@media (max-width: 480px) {
-    .stats-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .start-title {
-        font-size: 2rem;
-    }
-    
-    .feature-item {
-        font-size: var(--font-size-sm);
-        padding: var(--spacing-sm);
-    }
-}
-
-/* Question Modal Components */
+/* Question Modal Components - UNCHANGED */
 .question-content {
     padding: var(--spacing-xxl);
     max-width: 600px;
@@ -537,17 +415,7 @@
     box-shadow: var(--shadow-sm);
 }
 
-.answer-btn.correct {
-    background: rgba(76, 175, 80, 0.4);
-    border-color: #4CAF50;
-}
-
-.answer-btn.incorrect {
-    background: rgba(244, 67, 54, 0.4);
-    border-color: #f44336;
-}
-
-/* Game Over Modal */
+/* Game Over Modal - UNCHANGED */
 .game-over-content {
     padding: var(--spacing-xxl);
     text-align: center;
@@ -577,7 +445,7 @@
     flex-wrap: wrap;
 }
 
-/* Settings Modal */
+/* Settings Modal - UNCHANGED */
 .settings-content {
     padding: var(--spacing-xxl);
     min-width: 400px;
@@ -636,7 +504,7 @@
     justify-content: center;
 }
 
-/* Paused Overlay */
+/* Paused Overlay - UNCHANGED */
 .paused-overlay {
     background: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(5px);
@@ -654,7 +522,7 @@
     opacity: 0.8;
 }
 
-/* Notification Toast */
+/* Notification Toast - MOVED HERE from app.js styles */
 .notification-toast {
     position: fixed;
     top: var(--spacing-lg);
@@ -670,6 +538,8 @@
     transform: translateX(100%);
     opacity: 0;
     transition: all var(--transition-normal);
+    max-width: 300px;
+    font-size: 14px;
 }
 
 .notification-toast.show {
@@ -677,7 +547,27 @@
     opacity: 1;
 }
 
-/* Responsive Design */
+.notification-toast.success {
+    border-color: var(--success-color);
+    background: rgba(78, 205, 196, 0.2);
+}
+
+.notification-toast.info {
+    border-color: #2196F3;
+    background: rgba(33, 150, 243, 0.2);
+}
+
+.notification-toast.warning {
+    border-color: var(--warning-color);
+    background: rgba(255, 152, 0, 0.2);
+}
+
+.notification-toast.error {
+    border-color: var(--error-color);
+    background: rgba(255, 107, 107, 0.2);
+}
+
+/* Responsive Design - UNCHANGED */
 @media (max-width: 768px) {
     .control-btn {
         padding: 10px var(--spacing-md);

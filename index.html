@@ -51,25 +51,34 @@
     </div>
 
     <div class="game-container">
-        <!-- ENHANCED Game Controls Header with End Game Button -->
+        <!-- UPDATED: Compact Header with Global Stats -->
         <header class="game-controls">
-            <div class="control-group-left">
-                <button class="control-btn" id="newGameBtn" type="button">
-                    🎮 NEW GAME
+            <div class="global-stats-banner">
+                <span class="global-stat">
+                    <span class="stat-icon">🎮</span>
+                    <span class="stat-text">Games: <span id="gamesPlayed">0</span></span>
+                </span>
+                <span class="global-stat">
+                    <span class="stat-icon">🤝</span>
+                    <span class="stat-text">Ties: <span id="ties">0</span></span>
+                </span>
+            </div>
+            
+            <div class="control-group-compact">
+                <button class="control-btn-mini" id="newGameBtn" type="button">
+                    🎮 NEW
                 </button>
-                <button class="control-btn" id="pauseBtn" type="button">
+                <button class="control-btn-mini" id="pauseBtn" type="button">
                     ⏸️ PAUSE
                 </button>
-                <button class="control-btn end-game" id="endGameBtn" type="button">
-                    🛑 END GAME
+                <button class="control-btn-mini end-game" id="endGameBtn" type="button">
+                    🛑 END
                 </button>
-            </div>
-            <div class="control-group-right">
-                <button class="control-btn" id="settingsBtn" type="button">
-                    ⚙️ SETTINGS
+                <button class="control-btn-mini" id="settingsBtn" type="button">
+                    ⚙️
                 </button>
-                <button class="control-btn active" id="soundBtn" type="button">
-                    🔊 SOUND ON
+                <button class="control-btn-mini active" id="soundBtn" type="button">
+                    🔊
                 </button>
             </div>
         </header>
@@ -79,19 +88,32 @@
             <h1 class="game-title">TIC-TAC-TOE BLITZ</h1>
         </div>
 
-        <!-- Lives Section with Integrated Timer -->
+        <!-- ENHANCED: Lives Section with Player Stats -->
         <div class="lives-section">
-            <!-- Player X Lives -->
-            <div class="player-lives player-x-lives" id="playerXLives">
-                <div class="player-label">Player X</div>
+            <!-- Player X Lives + Stats -->
+            <div class="player-area player-x-area" id="playerXArea">
+                <div class="player-header">
+                    <div class="player-label">Player X</div>
+                    <div class="player-wins">🏆 <span id="playerXWins">0</span></div>
+                </div>
                 <div class="lives-container">
                     <div class="heart" data-life="1" data-player="X">❤️</div>
                     <div class="heart" data-life="2" data-player="X">❤️</div>
                     <div class="heart" data-life="3" data-player="X">❤️</div>
                 </div>
+                <div class="player-stats">
+                    <div class="mini-stat correct">
+                        <span class="mini-stat-icon">✅</span>
+                        <span class="mini-stat-value" id="playerXCorrect">0</span>
+                    </div>
+                    <div class="mini-stat wrong">
+                        <span class="mini-stat-icon">❌</span>
+                        <span class="mini-stat-value" id="playerXWrong">0</span>
+                    </div>
+                </div>
             </div>
 
-            <!-- Timer Section - Centered and Prominent -->
+            <!-- Timer Section - Enhanced but unchanged functionality -->
             <div class="timer-section">
                 <div class="timer-display" id="timerDisplay">
                     <div class="timer-text" id="timerText">Player X's Turn</div>
@@ -102,18 +124,31 @@
                 </div>
             </div>
 
-            <!-- Player O Lives -->
-            <div class="player-lives player-o-lives" id="playerOLives">
-                <div class="player-label">Player O</div>
+            <!-- Player O Lives + Stats -->
+            <div class="player-area player-o-area" id="playerOArea">
+                <div class="player-header">
+                    <div class="player-label">Player O</div>
+                    <div class="player-wins">🏆 <span id="playerOWins">0</span></div>
+                </div>
                 <div class="lives-container">
                     <div class="heart" data-life="1" data-player="O">❤️</div>
                     <div class="heart" data-life="2" data-player="O">❤️</div>
                     <div class="heart" data-life="3" data-player="O">❤️</div>
                 </div>
+                <div class="player-stats">
+                    <div class="mini-stat correct">
+                        <span class="mini-stat-icon">✅</span>
+                        <span class="mini-stat-value" id="playerOCorrect">0</span>
+                    </div>
+                    <div class="mini-stat wrong">
+                        <span class="mini-stat-icon">❌</span>
+                        <span class="mini-stat-value" id="playerOWrong">0</span>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- MAXIMIZED Game Board - Main Focus -->
+        <!-- Game Board Container - Unchanged -->
         <main class="game-board-container">
             <div class="game-board" id="gameBoard">
                 <!-- Row 0 -->
@@ -151,31 +186,7 @@
             </div>
         </main>
 
-        <!-- CRITICAL: ALWAYS VISIBLE Statistics Section -->
-        <footer class="stats-container" id="statsContainer">
-            <div class="stats-title">
-                📊 Game Statistics
-                <button class="clear-stats-btn" id="clearStatsBtn" type="button" title="Clear all statistics">🗑️</button>
-            </div>
-            <div class="stats-grid">
-                <div class="stat-item">
-                    <span class="stat-label">Games Played</span>
-                    <span class="stat-value" id="gamesPlayed">0</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">X Wins</span>
-                    <span class="stat-value" id="playerXWins">0</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">O Wins</span>
-                    <span class="stat-value" id="playerOWins">0</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">Ties</span>
-                    <span class="stat-value" id="ties">0</span>
-                </div>
-            </div>
-        </footer>
+        <!-- REMOVED: Bottom stats container completely eliminated -->
     </div>
 
     <!-- Question Modal -->

@@ -1,16 +1,29 @@
-// app.js - FIXED Main application with End Game button and stats visibility
+// app.js - FIXED: All three critical issues resolved
 class TicTacToeBlitzApp {
     constructor() {
         this.game = null
         this.audioSystem = null
         this.isInitialized = false
         
-        // Game statistics - FIXED to ensure persistence
+        // FIXED Issue B: Enhanced game statistics with proper game vs session tracking
         this.stats = {
+            // Session-persistent stats (saved to localStorage)
             gamesPlayed: 0,
             playerXWins: 0,
             playerOWins: 0,
-            ties: 0
+            ties: 0,
+            
+            // FIXED Issue B: Per-game question stats (reset each game, NOT saved)
+            currentGameStats: {
+                X: {
+                    questionsCorrect: 0,
+                    questionsWrong: 0
+                },
+                O: {
+                    questionsCorrect: 0,
+                    questionsWrong: 0
+                }
+            }
         }
         
         // Application settings - ENHANCED with music
@@ -54,8 +67,7 @@ class TicTacToeBlitzApp {
             this.loadSettings()
             this.loadStats()
             
-            // CRITICAL: Force stats display update and visibility
-            this.forceStatsVisibility()
+            // Update stats display
             this.updateStatsDisplay()
             
             // Show start screen
@@ -103,13 +115,17 @@ class TicTacToeBlitzApp {
     }
 
     /**
-     * Bind DOM elements to app
+     * UPDATED: Bind DOM elements to app with new player stat elements
      */
     bindDOMElements() {
         this.elements = {
             gameOverModal: document.getElementById('gameOverModal'),
             settingsModal: document.getElementById('settingsModal'),
             startScreen: document.getElementById('startScreen'),
+            
+            // NEW: Player area elements
+            playerXArea: document.getElementById('playerXArea'),
+            playerOArea: document.getElementById('playerOArea'),
             
             // Game over modal elements
             gameOverMessage: document.getElementById('gameOverMessage'),
@@ -132,45 +148,22 @@ class TicTacToeBlitzApp {
             startGameBtn: document.getElementById('startGameBtn'),
             quickStartBtn: document.getElementById('quickStartBtn'),
             
-            // Statistics elements
-            statsContainer: document.getElementById('statsContainer'),
-            gamesPlayedStat: document.getElementById('gamesPlayed'),
-            playerXWinsStat: document.getElementById('playerXWins'),
-            playerOWinsStat: document.getElementById('playerOWins'),
-            tiesStat: document.getElementById('ties'),
+            // UPDATED: Statistics elements (moved to different locations)
+            // Global stats (header)
+            gamesPlayed: document.getElementById('gamesPlayed'),
+            ties: document.getElementById('ties'),
+            
+            // NEW: Player-specific stats elements
+            playerXWins: document.getElementById('playerXWins'),
+            playerOWins: document.getElementById('playerOWins'),
+            playerXCorrect: document.getElementById('playerXCorrect'),
+            playerXWrong: document.getElementById('playerXWrong'),
+            playerOCorrect: document.getElementById('playerOCorrect'),
+            playerOWrong: document.getElementById('playerOWrong'),
             
             // Control buttons
             soundBtn: document.getElementById('soundBtn'),
-            endGameBtn: document.getElementById('endGameBtn') // NEW: End Game button
-        }
-    }
-
-    /**
-     * CRITICAL: Force stats container visibility
-     */
-    forceStatsVisibility() {
-        const statsContainer = document.getElementById('statsContainer')
-        if (statsContainer) {
-            // Force all CSS properties to ensure visibility
-            statsContainer.style.cssText = `
-                display: block !important;
-                opacity: 1 !important;
-                visibility: visible !important;
-                position: relative !important;
-                z-index: 100 !important;
-                background: rgba(0, 0, 0, 0.4) !important;
-                backdrop-filter: blur(10px) !important;
-                border-radius: 15px !important;
-                padding: 15px !important;
-                margin-top: 15px !important;
-                border: 2px solid rgba(255, 255, 255, 0.2) !important;
-                min-height: 80px !important;
-                max-height: none !important;
-                overflow: visible !important;
-            `
-            console.log('📊 Stats container forced visible with inline styles')
-        } else {
-            console.error('❌ Stats container not found!')
+            endGameBtn: document.getElementById('endGameBtn')
         }
     }
 
@@ -189,7 +182,7 @@ class TicTacToeBlitzApp {
             this.elements.saveSettingsBtn.addEventListener('click', () => this.saveSettingsWithFeedback())
         }
 
-        // NEW: End Game button
+        // End Game button
         if (this.elements.endGameBtn) {
             this.elements.endGameBtn.addEventListener('click', () => this.endCurrentGame())
         }
@@ -262,16 +255,6 @@ class TicTacToeBlitzApp {
             this.elements.quickStartBtn.addEventListener('click', () => this.quickStart())
         }
         
-        // Clear statistics button
-        const clearStatsBtn = document.getElementById('clearStatsBtn')
-        if (clearStatsBtn) {
-            clearStatsBtn.addEventListener('click', () => {
-                if (confirm('Are you sure you want to clear all statistics? This cannot be undone.')) {
-                    this.clearStatistics()
-                }
-            })
-        }
-    
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => this.handleGlobalKeyboard(e))
     
@@ -286,7 +269,7 @@ class TicTacToeBlitzApp {
     }
 
     /**
-     * NEW: End Current Game manually
+     * End Current Game manually
      */
     endCurrentGame() {
         if (this.game && this.game.isGameActive) {
@@ -325,7 +308,7 @@ class TicTacToeBlitzApp {
             this.handleGameEnd(message)
         }
 
-        // Player change callback
+        // Player change callback - FIXED Issue A: Ensure initial highlighting
         this.game.onPlayerChange = (newPlayer) => {
             this.handlePlayerChange(newPlayer)
         }
@@ -361,8 +344,6 @@ class TicTacToeBlitzApp {
             if (gameContainer) {
                 gameContainer.style.display = 'flex'
             }
-            // Force stats visibility again when showing game
-            this.forceStatsVisibility()
         }
     }
 
@@ -410,11 +391,14 @@ class TicTacToeBlitzApp {
     }
 
     /**
-     * Start new game with proper statistics handling
+     * FIXED Issue B: Start new game with proper question stats reset
      */
     async startNewGame() {
         try {
             this.hideGameOverModal()
+            
+            // FIXED Issue B: Reset current game question stats (NOT persistent stats)
+            this.resetCurrentGameStats()
             
             // Apply current settings to new game
             this.applySettingsToGame()
@@ -422,8 +406,10 @@ class TicTacToeBlitzApp {
             await this.game.startNewGame()
             this.playSound('new-game')
             
-            // CRITICAL: Ensure stats are visible and updated
-            this.forceStatsVisibility()
+            // FIXED Issue A: Force initial player highlighting after game starts
+            this.handlePlayerChange(this.game.currentPlayer)
+            
+            // Update stats display
             this.updateStatsDisplay()
             
             console.log('🎮 New game started!')
@@ -432,6 +418,23 @@ class TicTacToeBlitzApp {
             console.error('Error starting new game:', error)
             this.showErrorMessage('Failed to start new game.')
         }
+    }
+
+    /**
+     * FIXED Issue B: Reset only current game question stats
+     */
+    resetCurrentGameStats() {
+        this.stats.currentGameStats = {
+            X: {
+                questionsCorrect: 0,
+                questionsWrong: 0
+            },
+            O: {
+                questionsCorrect: 0,
+                questionsWrong: 0
+            }
+        }
+        console.log('🔄 Current game question stats reset')
     }
 
     /**
@@ -494,68 +497,117 @@ class TicTacToeBlitzApp {
             this.stats.ties++
         }
         
-        // CRITICAL: Save and update immediately
+        // Save and update immediately
         this.saveStats()
-        this.forceStatsVisibility()
         this.updateStatsDisplay()
         
         console.log('📊 Stats updated:', this.stats)
     }
 
     /**
-     * ENHANCED: Update statistics display with animations and forced visibility
+     * FIXED Issue B: Update player-specific question stats (current game only)
      */
-    updateStatsDisplay() {
-        // Force stats container visibility first
-        this.forceStatsVisibility()
+    updatePlayerQuestionStats(player, isCorrect) {
+        if (isCorrect) {
+            this.stats.currentGameStats[player].questionsCorrect++
+        } else {
+            this.stats.currentGameStats[player].questionsWrong++
+        }
         
-        const updates = [
-            { element: this.elements.gamesPlayedStat, value: this.stats.gamesPlayed },
-            { element: this.elements.playerXWinsStat, value: this.stats.playerXWins },
-            { element: this.elements.playerOWinsStat, value: this.stats.playerOWins },
-            { element: this.elements.tiesStat, value: this.stats.ties }
-        ]
+        // Update display immediately
+        this.updatePlayerStatsDisplay(player)
+        // NOTE: Don't save these stats - they're per-game only
         
-        updates.forEach(({ element, value }) => {
-            if (element) {
-                const oldValue = parseInt(element.textContent) || 0
-                if (oldValue !== value) {
-                    // Animate the change
-                    element.style.transform = 'scale(1.2)'
-                    element.style.color = 'var(--success-color)'
-                    
-                    setTimeout(() => {
-                        element.textContent = value
-                        element.style.transform = 'scale(1)'
-                        element.style.color = ''
-                    }, 200)
-                } else {
-                    // Just update without animation
-                    element.textContent = value
-                }
-            } else {
-                console.warn(`Stats element not found for value: ${value}`)
-            }
-        })
-        
-        console.log('📊 Stats display updated and forced visible:', this.stats)
+        console.log(`📊 Player ${player} current game question stats:`, this.stats.currentGameStats[player])
     }
 
     /**
-     * Clear all statistics (manual reset)
+     * FIXED Issue B: Method to update individual player stats display
+     */
+    updatePlayerStatsDisplay(player) {
+        const correctEl = player === 'X' ? this.elements.playerXCorrect : this.elements.playerOCorrect
+        const wrongEl = player === 'X' ? this.elements.playerXWrong : this.elements.playerOWrong
+        
+        if (correctEl) {
+            const oldValue = parseInt(correctEl.textContent) || 0
+            const newValue = this.stats.currentGameStats[player].questionsCorrect
+            
+            correctEl.textContent = newValue
+            
+            // Add glow effect for updates if value changed
+            if (oldValue !== newValue) {
+                correctEl.parentElement.style.transform = 'scale(1.1)'
+                correctEl.parentElement.style.background = 'rgba(76, 175, 80, 0.4)'
+                setTimeout(() => {
+                    correctEl.parentElement.style.transform = 'scale(1)'
+                    correctEl.parentElement.style.background = ''
+                }, 300)
+            }
+        }
+        
+        if (wrongEl) {
+            wrongEl.textContent = this.stats.currentGameStats[player].questionsWrong
+        }
+    }
+
+    /**
+     * ENHANCED: Update statistics display with animations
+     */
+    updateStatsDisplay() {
+        // Global stats (header)
+        if (this.elements.gamesPlayed) {
+            const oldValue = parseInt(this.elements.gamesPlayed.textContent) || 0
+            const newValue = this.stats.gamesPlayed
+            if (oldValue !== newValue) {
+                this.elements.gamesPlayed.style.transform = 'scale(1.2)'
+                this.elements.gamesPlayed.style.color = 'var(--success-color)'
+                setTimeout(() => {
+                    this.elements.gamesPlayed.textContent = newValue
+                    this.elements.gamesPlayed.style.transform = 'scale(1)'
+                    this.elements.gamesPlayed.style.color = ''
+                }, 200)
+            } else {
+                this.elements.gamesPlayed.textContent = newValue
+            }
+        }
+        
+        if (this.elements.ties) {
+            this.elements.ties.textContent = this.stats.ties
+        }
+        
+        // Player wins with animation
+        if (this.elements.playerXWins) {
+            this.elements.playerXWins.textContent = this.stats.playerXWins
+        }
+        if (this.elements.playerOWins) {
+            this.elements.playerOWins.textContent = this.stats.playerOWins
+        }
+        
+        // Player question stats (current game only)
+        this.updatePlayerStatsDisplay('X')
+        this.updatePlayerStatsDisplay('O')
+        
+        console.log('📊 All stats display updated:', this.stats)
+    }
+
+    /**
+     * FIXED Issue B: Clear all statistics including current game stats
      */
     clearStatistics() {
         this.stats = {
             gamesPlayed: 0,
             playerXWins: 0,
             playerOWins: 0,
-            ties: 0
+            ties: 0,
+            currentGameStats: {
+                X: { questionsCorrect: 0, questionsWrong: 0 },
+                O: { questionsCorrect: 0, questionsWrong: 0 }
+            }
         }
         this.saveStats()
-        this.forceStatsVisibility()
         this.updateStatsDisplay()
-        this.showNotification('Statistics cleared!', 'info', 2000)
-        console.log('📊 Statistics have been reset to zero')
+        this.showNotification('All statistics cleared!', 'info', 2000)
+        console.log('📊 Statistics have been reset completely')
     }
 
     /**
@@ -739,17 +791,38 @@ class TicTacToeBlitzApp {
      */
     updateSoundButton() {
         if (this.elements.soundBtn) {
-            this.elements.soundBtn.textContent = this.settings.soundEnabled ? '🔊 SOUND ON' : '🔇 SOUND OFF'
+            this.elements.soundBtn.textContent = this.settings.soundEnabled ? '🔊' : '🔇'
             this.elements.soundBtn.classList.toggle('active', this.settings.soundEnabled)
             this.elements.soundBtn.classList.toggle('muted', !this.settings.soundEnabled)
         }
     }
 
     /**
-     * Handle player change
+     * FIXED Issue A: Enhanced player change with prominent visual updates
      */
     handlePlayerChange(newPlayer) {
         this.playSound('turn-change')
+        
+        // FIXED Issue A: Enhanced active player visual states with stronger highlighting
+        if (this.elements.playerXArea && this.elements.playerOArea) {
+            // Remove active class from both first
+            this.elements.playerXArea.classList.remove('active')
+            this.elements.playerOArea.classList.remove('active')
+            
+            // Add active class to current player with enhanced effect
+            if (newPlayer === 'X') {
+                this.elements.playerXArea.classList.add('active')
+                // Additional prominence for Player X
+                this.elements.playerXArea.style.boxShadow = '0 0 25px rgba(102, 126, 234, 0.6)'
+                this.elements.playerOArea.style.boxShadow = ''
+            } else {
+                this.elements.playerOArea.classList.add('active')
+                // Additional prominence for Player O
+                this.elements.playerOArea.style.boxShadow = '0 0 25px rgba(240, 147, 251, 0.6)'
+                this.elements.playerXArea.style.boxShadow = ''
+            }
+        }
+        
         console.log(`🔄 Player changed to: ${newPlayer}`)
     }
 
@@ -804,7 +877,6 @@ class TicTacToeBlitzApp {
                 
             case 'e':
             case 'E':
-                // NEW: End game shortcut
                 if (e.ctrlKey || e.metaKey) {
                     e.preventDefault()
                     this.endCurrentGame()
@@ -867,20 +939,24 @@ class TicTacToeBlitzApp {
     }
 
     /**
-     * FIXED: Load stats from localStorage with validation
+     * FIXED Issue B: Load stats from localStorage - exclude current game stats
      */
     loadStats() {
         try {
             const savedStats = localStorage.getItem('tictactoe-blitz-stats')
             if (savedStats) {
                 const parsed = JSON.parse(savedStats)
-                // Validate stats object
+                // Validate stats object and load only persistent stats
                 if (parsed && typeof parsed === 'object') {
-                    this.stats = {
-                        gamesPlayed: parseInt(parsed.gamesPlayed) || 0,
-                        playerXWins: parseInt(parsed.playerXWins) || 0,
-                        playerOWins: parseInt(parsed.playerOWins) || 0,
-                        ties: parseInt(parsed.ties) || 0
+                    this.stats.gamesPlayed = parseInt(parsed.gamesPlayed) || 0
+                    this.stats.playerXWins = parseInt(parsed.playerXWins) || 0
+                    this.stats.playerOWins = parseInt(parsed.playerOWins) || 0
+                    this.stats.ties = parseInt(parsed.ties) || 0
+                    
+                    // FIXED Issue B: Don't load currentGameStats - always start fresh
+                    this.stats.currentGameStats = {
+                        X: { questionsCorrect: 0, questionsWrong: 0 },
+                        O: { questionsCorrect: 0, questionsWrong: 0 }
                     }
                 }
             }
@@ -892,18 +968,30 @@ class TicTacToeBlitzApp {
                 gamesPlayed: 0,
                 playerXWins: 0,
                 playerOWins: 0,
-                ties: 0
+                ties: 0,
+                currentGameStats: {
+                    X: { questionsCorrect: 0, questionsWrong: 0 },
+                    O: { questionsCorrect: 0, questionsWrong: 0 }
+                }
             }
         }
     }
 
     /**
-     * Save stats to localStorage
+     * FIXED Issue B: Save stats to localStorage - exclude current game stats
      */
     saveStats() {
         try {
-            localStorage.setItem('tictactoe-blitz-stats', JSON.stringify(this.stats))
-            console.log('💾 Stats saved:', this.stats)
+            // Only save persistent stats, not current game stats
+            const persistentStats = {
+                gamesPlayed: this.stats.gamesPlayed,
+                playerXWins: this.stats.playerXWins,
+                playerOWins: this.stats.playerOWins,
+                ties: this.stats.ties
+                // currentGameStats are NOT saved - they reset each game
+            }
+            localStorage.setItem('tictactoe-blitz-stats', JSON.stringify(persistentStats))
+            console.log('💾 Persistent stats saved:', persistentStats)
         } catch (error) {
             console.error('Error saving stats:', error)
         }
@@ -1021,13 +1109,14 @@ class TicTacToeBlitzApp {
     }
 
     /**
-     * Quick DOM validation
+     * UPDATED: DOM validation with new player stat elements
      */
     validateDOMConnections() {
         const required = [
-            'playerXLives', 'playerOLives', 'timerText', 'timerCountdown', 
+            'playerXArea', 'playerOArea', 'timerText', 'timerCountdown', 
             'timerBar', 'questionModal', 'gameOverModal', 'startScreen',
-            'statsContainer', 'endGameBtn'
+            'endGameBtn', 'playerXWins', 'playerOWins', 'playerXCorrect', 
+            'playerXWrong', 'playerOCorrect', 'playerOWrong'
         ]
         
         const missing = required.filter(id => !document.getElementById(id))
@@ -1035,7 +1124,7 @@ class TicTacToeBlitzApp {
             allConnected: missing.length === 0,
             missing: missing,
             cellsFound: document.querySelectorAll('[data-row][data-col]').length,
-            statsVisible: this.elements.statsContainer?.style.display !== 'none'
+            playerAreasFound: document.querySelectorAll('.player-area').length
         }
     }
 }
@@ -1055,150 +1144,3 @@ window.TicTacToeBlitzApp = app
 window.gameStatus = () => {
     return app.getStatus()
 }
-
-// CRITICAL: Force stats visibility on page load
-window.addEventListener('load', () => {
-    const statsContainer = document.getElementById('statsContainer')
-    if (statsContainer) {
-        statsContainer.style.cssText = `
-            display: block !important;
-            opacity: 1 !important;
-            visibility: visible !important;
-            position: relative !important;
-            z-index: 100 !important;
-        `
-        console.log('📊 Stats forced visible on window load')
-    }
-})
-
-// Add CSS styles for better error messages and stats forcing
-const style = document.createElement('style')
-style.textContent = `
-    @keyframes slideDown {
-        from {
-            transform: translate(-50%, -100%);
-            opacity: 0;
-        }
-        to {
-            transform: translate(-50%, 0);
-            opacity: 1;
-        }
-    }
-    
-    @keyframes fadeOut {
-        from { opacity: 1; }
-        to { opacity: 0; }
-    }
-    
-    .error-message {
-        font-family: var(--font-family, 'Segoe UI', system-ui, sans-serif);
-        font-weight: 600;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-    }
-    
-    .error-actions {
-        margin-top: 1rem;
-        display: flex;
-        gap: 1rem;
-        justify-content: center;
-    }
-    
-    .error-actions button {
-        background: rgba(255, 255, 255, 0.2);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        color: white;
-        padding: 0.5rem 1rem;
-        border-radius: 6px;
-        cursor: pointer;
-        font-weight: 600;
-    }
-    
-    .error-actions button:hover {
-        background: rgba(255, 255, 255, 0.3);
-    }
-    
-    .no-animations * {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-    }
-    
-    .clear-stats-btn {
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        color: rgba(255, 255, 255, 0.7);
-        padding: 2px 6px;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 12px;
-        margin-left: 10px;
-        transition: all 0.2s ease;
-    }
-    
-    .clear-stats-btn:hover {
-        background: rgba(255, 107, 107, 0.3);
-        color: white;
-        border-color: #ff6b6b;
-    }
-    
-    .stats-title {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    /* CRITICAL: Force stats container visibility */
-    #statsContainer {
-        display: block !important;
-        opacity: 1 !important;
-        visibility: visible !important;
-        position: relative !important;
-        z-index: 100 !important;
-    }
-
-    /* Notification toast styles */
-    .notification-toast {
-        position: fixed;
-        top: var(--spacing-lg);
-        right: var(--spacing-lg);
-        background: var(--glass-background);
-        backdrop-filter: var(--glass-backdrop);
-        border: 2px solid var(--glass-border);
-        border-radius: var(--radius-md);
-        padding: var(--spacing-md) var(--spacing-lg);
-        color: white;
-        font-weight: 600;
-        z-index: var(--z-effects);
-        transform: translateX(100%);
-        opacity: 0;
-        transition: all var(--transition-normal);
-        max-width: 300px;
-        font-size: 14px;
-    }
-
-    .notification-toast.show {
-        transform: translateX(0);
-        opacity: 1;
-    }
-
-    .notification-toast.success {
-        border-color: var(--success-color);
-        background: rgba(78, 205, 196, 0.2);
-    }
-
-    .notification-toast.info {
-        border-color: #2196F3;
-        background: rgba(33, 150, 243, 0.2);
-    }
-
-    .notification-toast.warning {
-        border-color: var(--warning-color);
-        background: rgba(255, 152, 0, 0.2);
-    }
-
-    .notification-toast.error {
-        border-color: var(--error-color);
-        background: rgba(255, 107, 107, 0.2);
-    }
-`
-document.head.appendChild(style)
