@@ -1,4 +1,10 @@
 // app.js - FIXED: All three critical issues resolved
+// 
+// GAME STATE MANAGEMENT:
+// 1. NEW GAME (🎮 NEW): Clear ALL stats and start completely fresh
+// 2. RESET GAME (🔄 RESET): Restart current session, keep current game stats
+// 3. END GAME (🛑 END): Return to start screen, keep current session stats
+//
 class TicTacToeBlitzApp {
     constructor() {
         this.game = null
@@ -67,8 +73,13 @@ class TicTacToeBlitzApp {
             this.loadSettings()
             this.loadStats()
             
+            console.log('⚙️ Settings after initialization:', this.settings)
+            
             // Update stats display
             this.updateStatsDisplay()
+            
+            // Initialize hearts display with default settings
+            this.updateLivesDisplay()
             
             // Show start screen
             this.showStartScreen()
@@ -106,12 +117,11 @@ class TicTacToeBlitzApp {
             await this.audioSystem.init()
         }
 
-        // Initialize game
-        this.game = new Game()
-        await this.game.initUI()
-
-        // Bind DOM elements
+        // Bind DOM elements first
         this.bindDOMElements()
+        
+        // Don't initialize game here - wait until game actually starts
+        // Game will be created in startNewGame() when container is visible
     }
 
     /**
@@ -135,7 +145,8 @@ class TicTacToeBlitzApp {
             
             // Settings modal elements
             settingsBtn: document.getElementById('settingsBtn'),
-            closeSettingsBtn: document.getElementById('closeSettingsBtn'),
+            cancelSettingsBtn: document.getElementById('cancelSettingsBtn'),
+            closeSettingsXBtn: document.getElementById('closeSettingsXBtn'),
             saveSettingsBtn: document.getElementById('saveSettingsBtn'),
             soundToggle: document.getElementById('soundToggle'),
             timerDurationSelect: document.getElementById('timerDurationSelect'),
@@ -162,6 +173,10 @@ class TicTacToeBlitzApp {
             playerOWrong: document.getElementById('playerOWrong'),
             
             // Control buttons
+            newGameBtn: document.getElementById('newGameBtn'),
+            startGameBtn: document.getElementById('startGameBtn'),
+            resetGameBtn: document.getElementById('resetGameBtn'),
+            pauseBtn: document.getElementById('pauseBtn'),
             soundBtn: document.getElementById('soundBtn'),
             endGameBtn: document.getElementById('endGameBtn')
         }
@@ -175,13 +190,35 @@ class TicTacToeBlitzApp {
         if (this.elements.settingsBtn) {
             this.elements.settingsBtn.addEventListener('click', () => this.showSettings())
         }
-        if (this.elements.closeSettingsBtn) {
-            this.elements.closeSettingsBtn.addEventListener('click', () => this.hideSettings())
+        if (this.elements.cancelSettingsBtn) {
+            this.elements.cancelSettingsBtn.addEventListener('click', () => this.hideSettings())
+        }
+        if (this.elements.closeSettingsXBtn) {
+            this.elements.closeSettingsXBtn.addEventListener('click', () => this.hideSettings())
         }
         if (this.elements.saveSettingsBtn) {
             this.elements.saveSettingsBtn.addEventListener('click', () => this.saveSettingsWithFeedback())
         }
+        
+        // Settings modal backdrop
+        const settingsModalBackdrop = document.getElementById('settingsModalBackdrop')
+        if (settingsModalBackdrop) {
+            settingsModalBackdrop.addEventListener('click', () => this.hideSettings())
+        }
+        
+        // Question modal backdrop - treat as outside click
+        const questionModalBackdrop = document.getElementById('questionModalBackdrop')
+        if (questionModalBackdrop) {
+            questionModalBackdrop.addEventListener('click', () => this.handleQuestionBackdropClick())
+        }
+        
 
+
+        // Start Game button (on game screen)
+        if (this.elements.startGameBtn) {
+            this.elements.startGameBtn.addEventListener('click', () => this.startGameFromGameScreen())
+        }
+        
         // End Game button
         if (this.elements.endGameBtn) {
             this.elements.endGameBtn.addEventListener('click', () => this.endCurrentGame())
@@ -192,6 +229,20 @@ class TicTacToeBlitzApp {
             this.elements.soundToggle.addEventListener('change', (e) => {
                 this.settings.soundEnabled = e.target.checked
                 this.applySound()
+            })
+        }
+        
+        // Lives setting - disable during active games or warn about restart
+        if (this.elements.startingLivesSelect) {
+            this.elements.startingLivesSelect.addEventListener('change', (e) => {
+                const newLives = parseInt(e.target.value)
+                if (this.game && this.game.isGameActive) {
+                    // Game is active - warn user about restart
+                    this.warnAboutLivesChange(newLives)
+                } else {
+                    // No active game - safe to change
+                    this.updateStartingLives(newLives)
+                }
             })
         }
         
@@ -219,7 +270,9 @@ class TicTacToeBlitzApp {
         // Other settings
         if (this.elements.startingLivesSelect) {
             this.elements.startingLivesSelect.addEventListener('change', (e) => {
-                this.settings.startingLives = parseInt(e.target.value)
+                const newLives = parseInt(e.target.value)
+                console.log(`❤️ Settings modal starting lives changed to ${newLives}`)
+                this.updateStartingLives(newLives)
             })
         }
         
@@ -238,13 +291,30 @@ class TicTacToeBlitzApp {
     
         // Game over modal buttons
         if (this.elements.playAgainBtn) {
-            this.elements.playAgainBtn.addEventListener('click', () => this.playAgain())
+            this.elements.playAgainBtn.addEventListener('click', () => {
+                console.log('🔄 Play Again button clicked from game over modal')
+                this.playAgain()
+            })
         }
         if (this.elements.newGameBtn) {
             this.elements.newGameBtn.addEventListener('click', () => this.startNewGame())
         }
         if (this.elements.newGameFromModalBtn) {
             this.elements.newGameFromModalBtn.addEventListener('click', () => this.startNewGame())
+        }
+        
+        // Game over modal backdrop click handler
+        const gameOverModalBackdrop = document.getElementById('gameOverModalBackdrop')
+        if (gameOverModalBackdrop) {
+            gameOverModalBackdrop.addEventListener('click', () => {
+                console.log('🎭 Game over modal backdrop clicked')
+                this.hideGameOverModal()
+            })
+        }
+
+        // Game control buttons
+        if (this.elements.resetGameBtn) {
+            this.elements.resetGameBtn.addEventListener('click', () => this.resetCurrentGame())
         }
     
         // Start screen buttons
@@ -254,6 +324,9 @@ class TicTacToeBlitzApp {
         if (this.elements.quickStartBtn) {
             this.elements.quickStartBtn.addEventListener('click', () => this.quickStart())
         }
+
+        // Start screen settings
+        this.bindStartScreenSettings()
         
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => this.handleGlobalKeyboard(e))
@@ -269,19 +342,241 @@ class TicTacToeBlitzApp {
     }
 
     /**
-     * End Current Game manually
+     * End Current Game manually - Always works and returns to start screen
      */
     endCurrentGame() {
+        // Always show confirmation modal, regardless of game state
+        this.showEndGameConfirmation()
+    }
+
+    /**
+     * Show custom end game confirmation modal
+     */
+    showEndGameConfirmation() {
+        // Pause the game when confirmation modal opens
         if (this.game && this.game.isGameActive) {
-            // Confirm before ending
-            if (confirm('Are you sure you want to end the current game? This will not count as a completed game.')) {
-                this.game.endGame('Game ended manually')
-                this.showNotification('Game ended manually', 'info', 2000)
-                console.log('🛑 Game ended manually by user')
-            }
-        } else {
-            this.showNotification('No active game to end', 'warning', 2000)
+            this.game.pauseGame()
         }
+        
+        // Create confirmation modal
+        const confirmationModal = document.createElement('div')
+        confirmationModal.className = 'modal confirmation-modal active'
+        confirmationModal.innerHTML = `
+            <div class="modal-backdrop"></div>
+            <div class="modal-content confirmation-content">
+                <div class="confirmation-header">
+                    <h3>⚠️ End Game?</h3>
+                    <p>Are you sure you want to end the current game?</p>
+                </div>
+                
+                <div class="confirmation-warning">
+                    <div class="warning-item">🎮 End the current game session</div>
+                    <div class="warning-item">📊 Keep current session stats</div>
+                    <div class="warning-item">🏠 Return to the start screen</div>
+                </div>
+                
+                <div class="confirmation-buttons">
+                    <button class="control-btn cancel-btn" id="cancelEndGameBtn" type="button">
+                        ❌ CANCEL
+                    </button>
+                    <button class="control-btn end-game-btn" id="confirmEndGameBtn" type="button">
+                        🛑 END GAME
+                    </button>
+                </div>
+            </div>
+        `
+        
+        // Add to body
+        document.body.appendChild(confirmationModal)
+        
+        // Bind event listeners
+        const cancelBtn = confirmationModal.querySelector('#cancelEndGameBtn')
+        const confirmBtn = confirmationModal.querySelector('#confirmEndGameBtn')
+        
+        // Handle backdrop click
+        const backdrop = confirmationModal.querySelector('.modal-backdrop')
+        backdrop.addEventListener('click', () => {
+            this.closeConfirmationModal(confirmationModal)
+        })
+        
+        cancelBtn.addEventListener('click', () => {
+            this.closeConfirmationModal(confirmationModal)
+        })
+        
+        confirmBtn.addEventListener('click', () => {
+            this.closeConfirmationModal(confirmationModal)
+            this.endGameAndShowWinner()
+        })
+        
+        // Focus on cancel button for safety
+        cancelBtn.focus()
+        
+        console.log('⚠️ End game confirmation modal displayed - Game paused')
+    }
+
+    /**
+     * Close confirmation modal and resume game if cancelled
+     */
+    closeConfirmationModal(modal) {
+        if (modal && modal.parentNode) {
+            modal.parentNode.removeChild(modal)
+        }
+        
+        // Resume the game if it was paused by the confirmation modal
+        if (this.game && this.game.isPaused) {
+            this.game.resumeGame()
+            console.log('🔄 Game resumed after cancelling end game')
+        }
+    }
+
+    /**
+     * End game, show ultimate winner, and return to start screen
+     */
+    endGameAndShowWinner() {
+        // End the current game
+        this.game.endGame('Game ended manually')
+        
+        // Determine ultimate winner
+        const ultimateWinner = this.determineUltimateWinner()
+        
+        // Show winner announcement with interactive options
+        this.showUltimateWinnerAnnouncement(ultimateWinner)
+        
+        // Don't reset game state yet - wait for user choice
+        // Game state will be reset when user chooses NEW GAME or START SCREEN
+        
+        console.log('🛑 Game ended manually by user')
+    }
+
+    /**
+     * Determine the ultimate winner based on total wins
+     */
+    determineUltimateWinner() {
+        const { playerXWins, playerOWins, ties } = this.stats
+        
+        if (playerXWins > playerOWins) {
+            return { player: 'X', wins: playerXWins, message: 'Player X is the Ultimate Winner!' }
+        } else if (playerOWins > playerXWins) {
+            return { player: 'O', wins: playerOWins, message: 'Player O is the Ultimate Winner!' }
+        } else if (playerXWins === playerOWins && playerXWins > 0) {
+            return { player: 'tie', wins: playerXWins, message: 'It\'s a tie! Both players are equally skilled!' }
+        } else {
+            return { player: 'none', wins: 0, message: 'No games completed yet!' }
+        }
+    }
+
+    /**
+     * Show ultimate winner announcement with interactive options
+     */
+    showUltimateWinnerAnnouncement(winner) {
+        // Capture current stats before any modifications
+        const currentStats = {
+            playerXWins: this.stats.playerXWins,
+            playerOWins: this.stats.playerOWins,
+            ties: this.stats.ties
+        }
+        
+        // Create winner announcement modal (not overlay)
+        const winnerModal = document.createElement('div')
+        winnerModal.className = 'modal winner-modal active'
+        winnerModal.innerHTML = `
+            <div class="modal-backdrop"></div>
+            <div class="modal-content winner-content">
+                <div class="winner-header">
+                    <div class="winner-title">🏆 GAME ENDED 🏆</div>
+                    <div class="winner-message">${winner.message}</div>
+                </div>
+                
+                <div class="winner-stats">
+                    <div class="winner-stat">
+                        <span class="stat-label">Player X Wins:</span>
+                        <span class="stat-value">${currentStats.playerXWins}</span>
+                    </div>
+                    <div class="winner-stat">
+                        <span class="stat-label">Player O Wins:</span>
+                        <span class="stat-value">${currentStats.playerOWins}</span>
+                    </div>
+                    <div class="winner-stat">
+                        <span class="stat-label">Ties:</span>
+                        <span class="stat-value">${currentStats.ties}</span>
+                    </div>
+                </div>
+                
+                <div class="winner-actions">
+                    <button class="control-btn new-game-btn" id="winnerNewGameBtn" type="button">
+                        🎮 NEW GAME
+                    </button>
+                    <button class="control-btn start-screen-btn" id="winnerStartScreenBtn" type="button">
+                        🏠 START SCREEN
+                    </button>
+                </div>
+            </div>
+        `
+        
+        // Add to body
+        document.body.appendChild(winnerModal)
+        
+        // Bind event listeners
+        const newGameBtn = winnerModal.querySelector('#winnerNewGameBtn')
+        const startScreenBtn = winnerModal.querySelector('#winnerStartScreenBtn')
+        const backdrop = winnerModal.querySelector('.modal-backdrop')
+        
+        // Handle backdrop click - do nothing (force user to make a choice)
+        backdrop.addEventListener('click', (e) => {
+            e.stopPropagation() // Prevent closing on backdrop click
+        })
+        
+        // New Game button - start fresh game
+        newGameBtn.addEventListener('click', () => {
+            console.log('🏆 Winner modal: NEW GAME button clicked')
+            console.log('📊 Stats before reset:', this.stats)
+            winnerModal.remove()
+            // Reset game state before starting new game
+            this.resetGameState()
+            this.startNewGame()
+        })
+        
+        // Start Screen button - return to main menu
+        startScreenBtn.addEventListener('click', () => {
+            console.log('🏆 Winner modal: START SCREEN button clicked')
+            console.log('📊 Stats before reset:', this.stats)
+            winnerModal.remove()
+            // Reset game state before returning to start screen
+            this.resetGameState()
+            this.showStartScreen()
+        })
+        
+        // Focus on New Game button for quick access
+        newGameBtn.focus()
+        
+        // Play victory sound
+        if (winner.player !== 'none') {
+            this.playSound('victory')
+        }
+        
+        console.log('🏆 Winner announcement modal displayed with interactive options')
+    }
+
+    /**
+     * Reset game state for new game
+     */
+    resetGameState() {
+        // Reset current game stats
+        this.stats.currentGameStats = {
+            X: { questionsCorrect: 0, questionsWrong: 0 },
+            O: { questionsCorrect: 0, questionsWrong: 0 }
+        }
+        
+        // Update display
+        this.updatePlayerStatsDisplay('X')
+        this.updatePlayerStatsDisplay('O')
+        
+        // Reset game instance
+        if (this.game) {
+            this.game = null
+        }
+        
+        console.log('🔄 Game state reset')
     }
 
     /**
@@ -330,6 +625,8 @@ class TicTacToeBlitzApp {
             if (gameContainer) {
                 gameContainer.style.display = 'none'
             }
+            // Sync start screen settings with current settings
+            this.syncStartScreenSettings()
         }
     }
 
@@ -352,6 +649,15 @@ class TicTacToeBlitzApp {
      */
     async startFirstGame() {
         try {
+            console.log('🎮 startFirstGame() called')
+            console.log('⚙️ Current settings before save:', this.settings)
+            
+            // Save start screen settings before starting game
+            this.saveSettings()
+            
+            console.log('⚙️ Settings after save:', this.settings)
+            console.log('❤️ Lives setting after save:', this.settings.startingLives)
+            console.log('⚙️ Settings saved, now hiding start screen')
             this.hideStartScreen()
             
             // Show loading briefly for effect
@@ -385,23 +691,108 @@ class TicTacToeBlitzApp {
      * Quick start (minimal intro)
      */
     async quickStart() {
+        // Save start screen settings before starting game
+        this.saveSettings()
+        
         this.hideStartScreen()
         await this.startNewGame()
         this.showNotification('Game started!', 'success', 2000)
     }
-
+    
     /**
-     * FIXED Issue B: Start new game with proper question stats reset
+     * Start game from game screen (keep stats, use current settings)
      */
-    async startNewGame() {
+    async startGameFromGameScreen() {
         try {
-            this.hideGameOverModal()
+            console.log('🚀 startGameFromGameScreen() called')
             
-            // FIXED Issue B: Reset current game question stats (NOT persistent stats)
-            this.resetCurrentGameStats()
+            // Hide any modals that might be open
+            this.hideGameOverModal()
+            this.hideSettings()
+            
+            // Create new game instance if needed
+            if (!this.game) {
+                console.log('🎮 Creating new game instance for game screen start')
+                this.game = new Game()
+                await this.game.initUI()
+                this.setupGameCallbacks()
+            }
             
             // Apply current settings to new game
             this.applySettingsToGame()
+            
+            // Update lives display to match settings
+            this.updateLivesDisplay()
+            
+            // Re-bind UI elements after lives display update
+            if (this.game.bindUIElements) {
+                this.game.bindUIElements()
+            }
+            
+            // Re-bind hearts specifically after they've been recreated
+            if (this.game.rebindHearts) {
+                this.game.rebindHearts()
+            }
+            
+            // Start the game
+            await this.game.startNewGame()
+            this.playSound('game-start')
+            
+            // Show notification
+            this.showNotification('New game started!', 'success', 2000)
+            
+        } catch (error) {
+            console.error('Error starting game from game screen:', error)
+            this.showErrorMessage('Failed to start game. Please try again.')
+        }
+    }
+
+    /**
+     * Start a completely new game session (clear ALL stats and start fresh)
+     * This is different from resetCurrentGame() which restarts the current session
+     */
+    async startNewGame() {
+        try {
+            console.log('🎮 startNewGame() called')
+            console.log('📊 Stats before clearing:', this.stats)
+            
+            this.hideGameOverModal()
+            
+            // Clear ALL statistics for fresh start
+            this.clearAllStatistics()
+            
+            console.log('📊 Stats after clearing:', this.stats)
+            
+            // Create new game instance
+            this.game = new Game()
+            console.log('🎮 Game instance created with initial lives:', this.game.lives)
+            
+            // Initialize the game UI AFTER container is visible
+            await this.game.initUI()
+            this.setupGameCallbacks()
+            
+            // Apply current settings to new game
+            console.log('⚙️ About to apply settings to game...')
+            this.applySettingsToGame()
+            
+            // Update lives display first to create new hearts
+            console.log('❤️ About to update lives display...')
+            this.updateLivesDisplay()
+            
+            // Re-bind UI elements after updating lives to get new heart references
+            console.log('🔗 About to bind UI elements...')
+            if (this.game.bindUIElements) {
+                this.game.bindUIElements()
+                console.log('🔗 UI elements bound successfully')
+            } else {
+                console.warn('⚠️ bindUIElements method not found on game instance')
+            }
+            
+            // Also re-bind hearts specifically after they've been recreated
+            if (this.game.rebindHearts) {
+                this.game.rebindHearts()
+                console.log('🔗 Hearts re-bound successfully')
+            }
             
             await this.game.startNewGame()
             this.playSound('new-game')
@@ -412,8 +803,8 @@ class TicTacToeBlitzApp {
             // Update stats display
             this.updateStatsDisplay()
             
-            console.log('🎮 New game started!')
-            console.log('📊 Current Statistics:', this.stats)
+            console.log('🎮 New game started with cleared stats!')
+            console.log('📊 Final Statistics:', this.stats)
         } catch (error) {
             console.error('Error starting new game:', error)
             this.showErrorMessage('Failed to start new game.')
@@ -438,18 +829,479 @@ class TicTacToeBlitzApp {
     }
 
     /**
+     * Reset current game (restart session, keep stats)
+     */
+    async resetCurrentGame() {
+        if (!this.game || !this.game.isGameActive) {
+            this.showNotification('No active game to reset', 'warning', 2000)
+            return
+        }
+
+        try {
+            // Show confirmation modal for reset
+            this.showResetGameConfirmation()
+        } catch (error) {
+            console.error('Error resetting game:', error)
+            this.showErrorMessage('Failed to reset game.')
+        }
+    }
+
+    /**
+     * Show reset game confirmation modal
+     */
+    showResetGameConfirmation() {
+        // Pause the game when confirmation modal opens
+        if (this.game && this.game.isGameActive) {
+            this.game.pauseGame()
+        }
+        
+        // Create confirmation modal
+        const confirmationModal = document.createElement('div')
+        confirmationModal.className = 'modal confirmation-modal active'
+        confirmationModal.innerHTML = `
+            <div class="modal-backdrop"></div>
+            <div class="modal-content confirmation-content">
+                <div class="confirmation-header">
+                    <h3>🔄 Reset Game?</h3>
+                    <p>Are you sure you want to reset the current game?</p>
+                </div>
+                
+                <div class="confirmation-info">
+                    <div class="info-item">🎮 Restart current session</div>
+                    <div class="info-item">📊 Keep current session stats</div>
+                    <div class="info-item">🔄 Fresh game board</div>
+                </div>
+                
+                <div class="confirmation-buttons">
+                    <button class="control-btn cancel-btn" id="cancelResetBtn" type="button">
+                        ❌ CANCEL
+                    </button>
+                    <button class="control-btn reset-btn" id="confirmResetBtn" type="button">
+                        🔄 RESET GAME
+                    </button>
+                </div>
+            </div>
+        `
+        
+        // Add to body
+        document.body.appendChild(confirmationModal)
+        
+        // Bind event listeners
+        const cancelBtn = confirmationModal.querySelector('#cancelResetBtn')
+        const confirmBtn = confirmationModal.querySelector('#confirmResetBtn')
+        
+        // Handle backdrop click
+        const backdrop = confirmationModal.querySelector('.modal-backdrop')
+        backdrop.addEventListener('click', () => {
+            this.closeResetConfirmationModal(confirmationModal)
+        })
+        
+        cancelBtn.addEventListener('click', () => {
+            this.closeResetConfirmationModal(confirmationModal)
+        })
+        
+        confirmBtn.addEventListener('click', () => {
+            this.closeResetConfirmationModal(confirmationModal)
+            this.executeResetGame()
+        })
+        
+        // Focus on cancel button for safety
+        cancelBtn.focus()
+        
+        console.log('🔄 Reset game confirmation modal displayed - Game paused')
+    }
+
+    /**
+     * Close reset confirmation modal and resume game if cancelled
+     */
+    closeResetConfirmationModal(modal) {
+        if (modal && modal.parentNode) {
+            modal.parentNode.removeChild(modal)
+        }
+        
+        // Resume the game if it was paused by the confirmation modal
+        if (this.game && this.game.isPaused) {
+            this.game.resumeGame()
+            console.log('🔄 Game resumed after cancelling reset')
+        }
+    }
+
+    /**
+     * Execute the reset game action (restart current session, keep stats)
+     */
+    async executeResetGame() {
+        try {
+            console.log('🔄 executeResetGame: Starting reset process...')
+            console.log('📊 Stats before reset:', this.stats)
+            
+            // Reset only current game question stats (keep persistent stats)
+            this.resetCurrentGameStats()
+            console.log('📊 Stats after resetCurrentGameStats:', this.stats)
+            
+            // Apply current settings to new game
+            this.applySettingsToGame()
+            
+            // Update lives display to match settings
+            this.updateLivesDisplay()
+            
+            // Re-bind UI elements after lives display update
+            if (this.game.bindUIElements) {
+                this.game.bindUIElements()
+            }
+            
+            // Re-bind hearts specifically after they've been recreated
+            if (this.game.rebindHearts) {
+                this.game.rebindHearts()
+            }
+            
+            // Start fresh game with same settings and preserved stats
+            await this.game.startNewGame()
+            this.playSound('new-game')
+            
+            // Force initial player highlighting after game starts
+            this.handlePlayerChange(this.game.currentPlayer)
+            
+            // Update stats display
+            this.updateStatsDisplay()
+            
+            console.log('📊 Stats after reset complete:', this.stats)
+            console.log('🔄 Game reset successfully - stats preserved!')
+            this.showNotification('Game reset successfully - stats preserved!', 'success', 2000)
+        } catch (error) {
+            console.error('Error executing reset game:', error)
+            this.showErrorMessage('Failed to reset game.')
+        }
+    }
+
+    /**
      * Apply settings to game
      */
     applySettingsToGame() {
         if (this.game) {
+            console.log('⚙️ Applying settings to game')
+            console.log('⏰ Timer setting:', this.settings.timerSeconds, 'seconds')
+            console.log('❤️ Lives setting:', this.settings.startingLives, 'lives')
+            console.log('🎮 Game lives before:', this.game.lives)
+            console.log('⚙️ Full settings object:', this.settings)
+            
             // Apply timer setting
             this.game.TURN_TIME_LIMIT = this.settings.timerSeconds * 1000
             
             // Apply lives setting
             this.game.lives = {
-                [this.game.BOARD.PLAYER1]: this.settings.startingLives,
-                [this.game.BOARD.PLAYER2]: this.settings.startingLives
+                X: this.settings.startingLives,
+                O: this.settings.startingLives
             }
+            
+            console.log('🎮 Game lives after:', this.game.lives)
+            
+            // Note: updateLivesDisplay() will be called explicitly after this method
+        } else {
+            console.warn('⚠️ applySettingsToGame: No game instance')
+        }
+    }
+
+    /**
+     * Centralized function to update starting lives setting
+     * Called from both start screen and settings menu
+     */
+    updateStartingLives(newLives) {
+        console.log(`❤️ updateStartingLives() called with ${newLives} lives`)
+        
+        // Update the setting
+        this.settings.startingLives = newLives
+        
+        // Update game lives if game is active and ready
+        if (this.game && this.game.lives) {
+            console.log('❤️ Game is active and ready, updating game lives')
+            
+            // Don't restore lost lives - only update the display to show the new total
+            // The current game state should be preserved
+            console.log('❤️ Preserving current game state, only updating display')
+            
+            // Update the visual display
+            this.updateLivesDisplay()
+        } else {
+            console.log('❤️ Game not active or not ready, lives will be applied when game starts')
+        }
+        
+        // Sync both UI elements to keep them in sync
+        this.syncStartingLivesUI(newLives)
+    }
+
+    /**
+     * Sync starting lives UI elements to match current setting
+     */
+    syncStartingLivesUI(lives) {
+        // Update start screen lives select
+        const startStartingLives = document.getElementById('startStartingLives')
+        if (startStartingLives) {
+            startStartingLives.value = lives
+        }
+        
+        // Update settings modal lives select
+        if (this.elements.startingLivesSelect) {
+            this.elements.startingLivesSelect.value = lives
+        }
+        
+        console.log(`❤️ Starting lives UI synced to ${lives}`)
+    }
+    
+    /**
+     * Warn user about lives change during active game
+     */
+    warnAboutLivesChange(newLives) {
+        const currentLives = this.settings.startingLives
+        
+        // Pause the game when confirmation modal opens
+        if (this.game && this.game.isGameActive) {
+            this.game.pauseGame()
+        }
+        
+        // Create custom confirmation modal
+        const confirmationModal = document.createElement('div')
+        confirmationModal.className = 'modal confirmation-modal active'
+        confirmationModal.innerHTML = `
+            <div class="modal-backdrop"></div>
+            <div class="modal-content confirmation-content">
+                <div class="confirmation-header">
+                    <h3>❤️ Change Lives Setting?</h3>
+                    <p>Changing lives from ${currentLives} to ${newLives} will reset the current game.</p>
+                </div>
+                
+                <div class="confirmation-info">
+                    <div class="info-item">🔄 Reset current game board</div>
+                    <div class="info-item">📊 Keep session stats (games played, wins, ties)</div>
+                    <div class="info-item">❤️ Apply new lives setting</div>
+                </div>
+                
+                <div class="confirmation-buttons">
+                    <button class="control-btn cancel-btn" id="cancelLivesChangeBtn" type="button">
+                        ❌ CANCEL
+                    </button>
+                    <button class="control-btn confirm-btn" id="confirmLivesChangeBtn" type="button">
+                        ✅ CONFIRM
+                    </button>
+                </div>
+            </div>
+        `
+        
+        // Add to body
+        document.body.appendChild(confirmationModal)
+        
+        // Bind event listeners
+        const cancelBtn = confirmationModal.querySelector('#cancelLivesChangeBtn')
+        const confirmBtn = confirmationModal.querySelector('#confirmLivesChangeBtn')
+        
+        // Handle backdrop click
+        const backdrop = confirmationModal.querySelector('.modal-backdrop')
+        backdrop.addEventListener('click', () => {
+            this.closeLivesChangeModal(confirmationModal, currentLives)
+        })
+        
+        cancelBtn.addEventListener('click', () => {
+            this.closeLivesChangeModal(confirmationModal, currentLives)
+        })
+        
+        confirmBtn.addEventListener('click', () => {
+            this.closeLivesChangeModal(confirmationModal, currentLives)
+            this.restartGameWithNewLives(newLives)
+        })
+        
+        // Focus on cancel button for safety
+        cancelBtn.focus()
+        
+        console.log('❤️ Lives change confirmation modal displayed - Game paused')
+    }
+    
+    /**
+     * Close lives change confirmation modal
+     */
+    closeLivesChangeModal(modal, originalLives) {
+        // Resume the game when modal closes
+        if (this.game && this.game.isGameActive && this.game.isPaused) {
+            this.game.resumeGame()
+            console.log('▶️ Game resumed after lives change modal')
+        }
+        
+        // Revert the select value to original
+        if (this.elements.startingLivesSelect) {
+            this.elements.startingLivesSelect.value = originalLives
+        }
+        
+        // Remove modal from DOM
+        if (modal && modal.parentNode) {
+            modal.parentNode.removeChild(modal)
+        }
+        
+        console.log('❤️ Lives change confirmation modal closed')
+    }
+    
+    /**
+     * Handle question modal backdrop click - treat as outside click
+     */
+    handleQuestionBackdropClick() {
+        if (!this.game || !this.game.questionUI) {
+            console.log('⚠️ Question backdrop clicked but no game or questionUI')
+            return
+        }
+        
+        console.log('💔 Player clicked outside question modal - treating as incorrect answer')
+        
+        // Call handleAnswerClick with empty string and outSideClick = true
+        this.game.questionUI.handleAnswerClick('', true)
+    }
+    
+
+    
+    /**
+     * Reset game with new lives setting (keeps session stats)
+     */
+    restartGameWithNewLives(newLives) {
+        console.log(`🔄 Resetting game with new lives: ${newLives}`)
+        console.log('📊 Stats before lives change reset:', this.stats)
+        
+        // Update the setting
+        this.settings.startingLives = newLives
+        
+        // Sync start screen
+        this.syncStartingLivesUI(newLives)
+        
+        // Reset the current game (preserving session stats)
+        if (this.game) {
+            // Reset only current game stats, keep session stats
+            this.resetCurrentGameStats()
+            console.log('📊 Stats after resetCurrentGameStats:', this.stats)
+            
+            // Reset the game state and apply new settings
+            this.game.resetGame()
+            this.applySettingsToGame()
+            this.updateLivesDisplay()
+            this.game.rebindHearts()
+            this.game.startNewGame()
+            
+            console.log('📊 Stats after game restart:', this.stats)
+        }
+        
+        // Close settings modal
+        this.hideSettings()
+        
+        // Show notification
+        this.showNotification(`Game reset with ${newLives} lives!`, 'info')
+    }
+
+        /**
+     * Update lives display to match current settings
+     */
+    updateLivesDisplay() {
+        try {
+            console.log('❤️ updateLivesDisplay() called')
+            
+            if (!this.game) {
+                console.log('⚠️ updateLivesDisplay: No game instance - creating hearts anyway for initialization')
+                // Continue without game instance for initial setup
+            }
+            
+            // Safety check for settings
+            if (!this.settings || typeof this.settings.startingLives === 'undefined') {
+                console.error('❌ updateLivesDisplay: settings or startingLives is undefined')
+                console.log('❌ this.settings:', this.settings)
+                return
+            }
+            
+            const startingLives = this.settings.startingLives
+            console.log('❤️ Updating lives display to:', startingLives, 'lives')
+            console.log('❤️ Current settings:', this.settings)
+            
+            // Safety check for startingLives value
+            if (typeof startingLives !== 'number' || startingLives < 1 || startingLives > 10) {
+                console.error('❌ updateLivesDisplay: Invalid startingLives value:', startingLives)
+                return
+            }
+            
+            // Safety check for DOM elements
+            const playerXArea = document.getElementById('playerXArea')
+            const playerOArea = document.getElementById('playerOArea')
+            
+            if (!playerXArea || !playerOArea) {
+                console.error('❌ updateLivesDisplay: Player areas not found')
+                console.log('❌ playerXArea:', playerXArea)
+                console.log('❌ playerOArea:', playerOArea)
+                return
+            }
+            
+            // Update both player areas
+            ['X', 'O'].forEach(player => {
+                try {
+                    const playerArea = document.getElementById(`player${player}Area`)
+                    if (!playerArea) {
+                        console.warn(`⚠️ Player ${player} area not found`)
+                        return
+                    }
+                    
+                    const livesContainer = playerArea.querySelector('.lives-container')
+                    if (!livesContainer) {
+                        console.warn(`⚠️ Lives container for player ${player} not found`)
+                        return
+                    }
+                    
+                    // Clear existing hearts
+                    livesContainer.innerHTML = ''
+                    
+                    // Create new hearts based on settings
+                    for (let i = 1; i <= startingLives; i++) {
+                        const heart = document.createElement('div')
+                        heart.className = 'heart'
+                        heart.setAttribute('data-life', i)
+                        heart.setAttribute('data-player', player)
+                        
+                        // Check if this life is lost based on current game state
+                        let heartSymbol = '❤️' // Default to alive
+                        
+                        if (this.game && this.game.lives && this.game.lives[player]) {
+                            const currentLives = this.game.lives[player]
+                            
+                            // Calculate which hearts should be lost
+                            // Hearts are created from left to right (i starts at 1)
+                            // If we're reducing lives (e.g., 5 to 3), the leftmost hearts should be lost
+                            const heartsToLose = startingLives - currentLives
+                            
+                            // If this heart index is within the "lost" range, mark it as lost
+                            if (i <= heartsToLose) {
+                                heartSymbol = '💔'
+                            }
+                        }
+                        
+                        heart.textContent = heartSymbol
+                        heart.style.transition = 'all 0.3s ease'
+                        
+                        // Let CSS handle the styling
+                        
+                        livesContainer.appendChild(heart)
+                    }
+                } catch (playerError) {
+                    console.error(`❌ Error processing player ${player}:`, playerError)
+                }
+            })
+            
+            // After recreating hearts, update their visual state to match current game state
+            if (this.game && this.game.updateLives) {
+                console.log('❤️ Calling game.updateLives() to restore visual state')
+                this.game.updateLives()
+            }
+            
+            // Note: Game lives are already set by applySettingsToGame()
+            // We only need to update the visual display
+            if (this.game && this.game.lives) {
+                console.log('❤️ Lives display updated, game lives should be:', {
+                    X: this.game.lives.X,
+                    O: this.game.lives.O
+                })
+            } else {
+                console.log('⚠️ Game or lives not fully initialized yet, skipping lives logging')
+            }
+        } catch (error) {
+            console.error('❌ Error in updateLivesDisplay:', error)
         }
     }
 
@@ -457,7 +1309,56 @@ class TicTacToeBlitzApp {
      * Play again (keep stats, start fresh round)
      */
     async playAgain() {
-        await this.startNewGame()
+        try {
+            console.log('🔄 playAgain() called')
+            console.log('🎮 Game instance exists:', this.game ? 'YES' : 'NO')
+            console.log('🎭 Game over modal active:', this.elements.gameOverModal?.classList.contains('active'))
+            
+            // Hide the game over modal first
+            this.hideGameOverModal()
+            
+            // Reset only current game stats, keep persistent stats
+            this.resetCurrentGameStats()
+            
+            // Create new game instance if needed
+            if (!this.game) {
+                console.log('🎮 Creating new game instance for play again')
+                this.game = new Game()
+                await this.game.initUI()
+                this.setupGameCallbacks()
+            }
+            
+            // Apply current settings to new game
+            this.applySettingsToGame()
+            
+            // Update lives display to match settings
+            this.updateLivesDisplay()
+            
+            // Re-bind UI elements after lives display update
+            if (this.game.bindUIElements) {
+                this.game.bindUIElements()
+            }
+            
+            // Re-bind hearts specifically after they've been recreated
+            if (this.game.rebindHearts) {
+                this.game.rebindHearts()
+            }
+            
+            // Start fresh game with same settings and preserved stats
+            await this.game.startNewGame()
+            this.playSound('new-game')
+            
+            // Force initial player highlighting after game starts
+            this.handlePlayerChange(this.game.currentPlayer)
+            
+            // Update stats display
+            this.updateStatsDisplay()
+            
+            console.log('🔄 Play again - stats preserved!')
+        } catch (error) {
+            console.error('Error in playAgain:', error)
+            this.showErrorMessage('Failed to start new game. Please try again.')
+        }
     }
 
     /**
@@ -591,9 +1492,12 @@ class TicTacToeBlitzApp {
     }
 
     /**
-     * FIXED Issue B: Clear all statistics including current game stats
+     * Clear ALL statistics for fresh start
      */
-    clearStatistics() {
+    clearAllStatistics() {
+        console.log('🗑️ clearAllStatistics() called')
+        console.log('📊 Stats before clearing:', this.stats)
+        
         this.stats = {
             gamesPlayed: 0,
             playerXWins: 0,
@@ -604,10 +1508,12 @@ class TicTacToeBlitzApp {
                 O: { questionsCorrect: 0, questionsWrong: 0 }
             }
         }
+        
         this.saveStats()
         this.updateStatsDisplay()
-        this.showNotification('All statistics cleared!', 'info', 2000)
-        console.log('📊 Statistics have been reset completely')
+        this.showNotification('All statistics cleared for fresh start!', 'success', 2000)
+        console.log('📊 ALL statistics cleared for fresh start')
+        console.log('📊 Stats after clearing:', this.stats)
     }
 
     /**
@@ -655,6 +1561,10 @@ class TicTacToeBlitzApp {
         if (this.elements.gameOverModal && this.elements.gameOverMessage) {
             this.elements.gameOverMessage.textContent = message
             this.elements.gameOverModal.classList.add('active')
+            console.log('🎭 Game over modal shown with message:', message)
+            console.log('🎮 Current game instance:', this.game ? 'exists' : 'null')
+        } else {
+            console.warn('⚠️ Game over modal elements not found')
         }
     }
 
@@ -664,6 +1574,9 @@ class TicTacToeBlitzApp {
     hideGameOverModal() {
         if (this.elements.gameOverModal) {
             this.elements.gameOverModal.classList.remove('active')
+            console.log('🎭 Game over modal hidden')
+        } else {
+            console.warn('⚠️ Game over modal element not found')
         }
     }
 
@@ -673,6 +1586,13 @@ class TicTacToeBlitzApp {
     showSettings() {
         if (this.elements.settingsModal) {
             console.log('Opening settings...')
+            
+            // Pause the game when settings modal opens
+            if (this.game && this.game.isGameActive && !this.game.isPaused) {
+                this.game.pauseGame()
+                console.log('⏸️ Game paused for settings modal')
+            }
+            
             this.elements.settingsModal.classList.add('active')
             this.syncSettingsToUI()
         }
@@ -684,6 +1604,12 @@ class TicTacToeBlitzApp {
     hideSettings() {
         if (this.elements.settingsModal) {
             this.elements.settingsModal.classList.remove('active')
+            
+            // Resume the game when settings modal closes
+            if (this.game && this.game.isGameActive && this.game.isPaused) {
+                this.game.resumeGame()
+                console.log('▶️ Game resumed after settings modal')
+            }
         }
     }
 
@@ -695,6 +1621,9 @@ class TicTacToeBlitzApp {
         this.applyAllSettings()
         this.showNotification('Settings saved successfully!', 'success', 2000)
         console.log('⚙️ Settings saved and applied')
+        
+        // Automatically close the settings modal
+        this.hideSettings()
     }
 
     /**
@@ -737,6 +1666,8 @@ class TicTacToeBlitzApp {
         this.applyAnimations()
         this.applySettingsToGame()
         this.updateSoundButton()
+        // Also sync start screen settings
+        this.syncStartScreenSettings()
     }
 
     /**
@@ -921,7 +1852,8 @@ class TicTacToeBlitzApp {
             this.applyAllSettings()
             this.syncSettingsToUI()
             
-            console.log('⚙️ Settings loaded:', this.settings)
+            console.log('⚙️ Settings loaded from localStorage:', this.settings)
+            console.log('⚙️ This will be overridden by start screen settings when game starts')
         } catch (error) {
             console.error('Error loading settings:', error)
         }
@@ -932,7 +1864,11 @@ class TicTacToeBlitzApp {
      */
     saveSettings() {
         try {
+            // Read current start screen settings before saving (these take priority)
+            this.loadStartScreenSettingsIntoApp()
+            
             localStorage.setItem('tictactoe-blitz-settings', JSON.stringify(this.settings))
+            console.log('💾 Settings saved with start screen priority:', this.settings)
         } catch (error) {
             console.error('Error saving settings:', error)
         }
@@ -1003,6 +1939,128 @@ class TicTacToeBlitzApp {
     saveProgress() {
         this.saveSettings()
         this.saveStats()
+    }
+
+    /**
+     * Bind start screen settings event listeners
+     */
+    bindStartScreenSettings() {
+        // Timer duration
+        const startTimerDuration = document.getElementById('startTimerDuration')
+        if (startTimerDuration) {
+            startTimerDuration.addEventListener('change', (e) => {
+                this.settings.timerSeconds = parseInt(e.target.value)
+                console.log(`⏰ Start screen timer set to ${this.settings.timerSeconds} seconds`)
+            })
+        }
+
+        // Starting lives
+        const startStartingLives = document.getElementById('startStartingLives')
+        if (startStartingLives) {
+            startStartingLives.addEventListener('change', (e) => {
+                const newLives = parseInt(e.target.value)
+                console.log(`❤️ Start screen starting lives changed to ${newLives}`)
+                this.updateStartingLives(newLives)
+            })
+        }
+
+        // Difficulty
+        const startDifficulty = document.getElementById('startDifficulty')
+        if (startDifficulty) {
+            startDifficulty.addEventListener('change', (e) => {
+                this.settings.difficulty = e.target.value
+                console.log(`🧠 Start screen difficulty set to ${this.settings.difficulty}`)
+            })
+        }
+
+        // Sound toggle
+        const startSoundToggle = document.getElementById('startSoundToggle')
+        if (startSoundToggle) {
+            startSoundToggle.addEventListener('change', (e) => {
+                this.settings.soundEnabled = e.target.checked
+                this.applySound()
+                console.log(`🔊 Start screen sound ${this.settings.soundEnabled ? 'enabled' : 'disabled'}`)
+            })
+        }
+    }
+
+    /**
+     * Sync start screen settings with current settings
+     */
+    syncStartScreenSettings() {
+        // Timer duration
+        const startTimerDuration = document.getElementById('startTimerDuration')
+        if (startTimerDuration) {
+            startTimerDuration.value = this.settings.timerSeconds
+        }
+
+        // Starting lives
+        this.syncStartingLivesUI(this.settings.startingLives)
+
+        // Difficulty
+        const startDifficulty = document.getElementById('startDifficulty')
+        if (startDifficulty) {
+            startDifficulty.value = this.settings.difficulty
+        }
+
+        // Sound toggle
+        const startSoundToggle = document.getElementById('startSoundToggle')
+        if (startSoundToggle) {
+            startSoundToggle.checked = this.settings.soundEnabled
+        }
+        
+        console.log('⚙️ Start screen settings synced:', {
+            timer: this.settings.timerSeconds,
+            lives: this.settings.startingLives,
+            difficulty: this.settings.difficulty,
+            sound: this.settings.soundEnabled
+        })
+    }
+
+    /**
+     * Load start screen settings from DOM into app settings
+     */
+    loadStartScreenSettingsIntoApp() {
+        try {
+            console.log('⚙️ Loading start screen settings from DOM...')
+            
+            // Timer duration
+            const startTimerDuration = document.getElementById('startTimerDuration')
+            if (startTimerDuration) {
+                const timerValue = parseInt(startTimerDuration.value)
+                console.log('⏰ Timer DOM value:', startTimerDuration.value, '-> parsed:', timerValue)
+                this.settings.timerSeconds = timerValue
+            }
+
+            // Starting lives
+            const startStartingLives = document.getElementById('startStartingLives')
+            if (startStartingLives) {
+                const livesValue = parseInt(startStartingLives.value)
+                console.log('❤️ Lives DOM value:', startStartingLives.value, '-> parsed:', livesValue)
+                this.settings.startingLives = livesValue
+            }
+
+            // Difficulty
+            const startDifficulty = document.getElementById('startDifficulty')
+            if (startDifficulty) {
+                const difficultyValue = startDifficulty.value
+                console.log('🧠 Difficulty DOM value:', difficultyValue)
+                this.settings.difficulty = difficultyValue
+            }
+
+            // Sound toggle
+            const startSoundToggle = document.getElementById('startSoundToggle')
+            if (startSoundToggle) {
+                const soundValue = startSoundToggle.checked
+                console.log('🔊 Sound DOM value:', soundValue)
+                this.settings.soundEnabled = soundValue
+            }
+            
+            console.log('⚙️ Start screen settings loaded into app:', this.settings)
+            console.log('❤️ Specifically, lives setting is now:', this.settings.startingLives)
+        } catch (error) {
+            console.error('Error loading start screen settings:', error)
+        }
     }
 
     /**

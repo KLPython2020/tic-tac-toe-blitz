@@ -28,17 +28,57 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 </head>
 <body>
-    <!-- START SCREEN -->
+        <!-- START SCREEN -->
     <div class="overlay start-screen" id="startScreen" aria-hidden="true">
         <div class="overlay-content">
             <h1 class="start-title">TIC-TAC-TOE BLITZ</h1>
             <p class="start-subtitle">Fast-paced tic-tac-toe with knowledge challenges!</p>
-            <div class="start-features">
-                <div class="feature-item">⏰ 5-second timer pressure</div>
-                <div class="feature-item">💣 Random bomb questions</div>
-                <div class="feature-item">❤️ 3 lives per player</div>
-                <div class="feature-item">🧠 Knowledge saves lives</div>
+            
+            <div class="start-settings">
+                <h3>⚙️ Game Settings</h3>
+                <div class="settings-row">
+                    <div class="setting-item">
+                        <label for="startTimerDuration">Timer</label>
+                        <select id="startTimerDuration">
+                            <option value="3">3 seconds</option>
+                            <option value="5" selected>5 seconds</option>
+                            <option value="7">7 seconds</option>
+                            <option value="10">10 seconds</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label for="startStartingLives">Lives</label>
+                        <select id="startStartingLives">
+                            <option value="1">1 life</option>
+                            <option value="3" selected>3 lives</option>
+                            <option value="5">5 lives</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="settings-row">
+                    <div class="setting-item">
+                        <label for="startDifficulty">Difficulty</label>
+                        <select id="startDifficulty">
+                            <option value="easy" selected>Easy</option>
+                            <option value="medium">Medium</option>
+                            <option value="hard">Hard</option>
+                            <option value="mixed">Mixed</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label for="startSoundToggle">Sound</label>
+                        <input type="checkbox" id="startSoundToggle" checked>
+                    </div>
+                </div>
             </div>
+            
+            <div class="start-features">
+                <div class="feature-item">⏰ Timer pressure</div>
+                <div class="feature-item">💣 Hidden bombs</div>
+                <div class="feature-item">❤️ Life system</div>
+                <div class="feature-item">🧠 Trivia challenges</div>
+            </div>
+            
             <div class="start-buttons">
                 <button class="control-btn start-btn" id="startGameBtn" type="button">
                     🎮 START GAME
@@ -65,19 +105,25 @@
             </div>
             
             <div class="control-group-compact">
-                <button class="control-btn-mini" id="newGameBtn" type="button">
+                <button class="control-btn-mini" id="newGameBtn" type="button" title="Clear all stats and start completely fresh">
                     🎮 NEW
                 </button>
-                <button class="control-btn-mini" id="pauseBtn" type="button">
+                <button class="control-btn-mini" id="startGameBtn" type="button" title="Start new game with current settings (keep stats)">
+                    🚀 START
+                </button>
+                <button class="control-btn-mini" id="resetGameBtn" type="button" title="Restart current session (keep stats)">
+                    🔄 RESET
+                </button>
+                <button class="control-btn-mini" id="pauseBtn" type="button" title="Pause/Resume current game">
                     ⏸️ PAUSE
                 </button>
-                <button class="control-btn-mini end-game" id="endGameBtn" type="button">
+                <button class="control-btn-mini end-game" id="endGameBtn" type="button" title="Return to start screen (keep current session stats)">
                     🛑 END
                 </button>
-                <button class="control-btn-mini" id="settingsBtn" type="button">
+                <button class="control-btn-mini" id="settingsBtn" type="button" title="Game settings">
                     ⚙️
                 </button>
-                <button class="control-btn-mini active" id="soundBtn" type="button">
+                <button class="control-btn-mini active" id="soundBtn" type="button" title="Toggle sound">
                     🔊
                 </button>
             </div>
@@ -97,9 +143,7 @@
                     <div class="player-wins">🏆 <span id="playerXWins">0</span></div>
                 </div>
                 <div class="lives-container">
-                    <div class="heart" data-life="1" data-player="X">❤️</div>
-                    <div class="heart" data-life="2" data-player="X">❤️</div>
-                    <div class="heart" data-life="3" data-player="X">❤️</div>
+                    <!-- Hearts will be dynamically generated based on settings -->
                 </div>
                 <div class="player-stats">
                     <div class="mini-stat correct">
@@ -131,9 +175,7 @@
                     <div class="player-wins">🏆 <span id="playerOWins">0</span></div>
                 </div>
                 <div class="lives-container">
-                    <div class="heart" data-life="1" data-player="O">❤️</div>
-                    <div class="heart" data-life="2" data-player="O">❤️</div>
-                    <div class="heart" data-life="3" data-player="O">❤️</div>
+                    <!-- Hearts will be dynamically generated based on settings -->
                 </div>
                 <div class="player-stats">
                     <div class="mini-stat correct">
@@ -191,7 +233,7 @@
 
     <!-- Question Modal -->
     <div class="modal question-modal" id="questionModal" role="dialog" aria-labelledby="questionText" aria-hidden="true">
-        <div class="modal-backdrop" onclick="closeModal('questionModal')"></div>
+        <div class="modal-backdrop" id="questionModalBackdrop"></div>
         <div class="modal-content question-content">
             <div class="question-header">
                 <h3 id="questionPlayerName">Player X</h3>
@@ -209,7 +251,7 @@
 
     <!-- Game Over Modal -->
     <div class="modal game-over-modal" id="gameOverModal" role="dialog" aria-labelledby="gameOverTitle" aria-hidden="true">
-        <div class="modal-backdrop" onclick="closeModal('gameOverModal')"></div>
+        <div class="modal-backdrop" id="gameOverModalBackdrop"></div>
         <div class="modal-content game-over-content">
             <div class="game-over-title" id="gameOverTitle" role="heading" aria-level="1">
                 🏆 Game Over!
@@ -244,7 +286,7 @@
 
     <!-- Settings Modal -->
     <div class="modal settings-modal" id="settingsModal" role="dialog" aria-labelledby="settingsTitle" aria-hidden="true">
-        <div class="modal-backdrop" onclick="closeModal('settingsModal')"></div>
+        <div class="modal-backdrop" id="settingsModalBackdrop"></div>
         <div class="modal-content settings-content">
             <div class="settings-title" id="settingsTitle" role="heading" aria-level="1">⚙️ Settings</div>
             
@@ -298,12 +340,16 @@
                 </div>
             </div>
 
+            <div class="settings-header">
+                <button class="modal-close-btn" id="closeSettingsXBtn" type="button" aria-label="Close settings">×</button>
+            </div>
+            
             <div class="settings-buttons">
+                <button class="control-btn secondary-btn" id="cancelSettingsBtn" type="button">
+                    ❌ CANCEL
+                </button>
                 <button class="control-btn" id="saveSettingsBtn" type="button">
                     💾 SAVE
-                </button>
-                <button class="control-btn" id="closeSettingsBtn" type="button">
-                    ❌ CLOSE
                 </button>
             </div>
         </div>

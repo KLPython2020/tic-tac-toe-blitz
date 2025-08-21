@@ -9,7 +9,6 @@
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    overflow-y: auto;
     overflow-x: hidden;
 }
 
@@ -575,6 +574,198 @@
 .overlay-content {
     text-align: center;
     color: white;
+}
+
+/* Start Screen - Simple Design */
+.start-screen .overlay-content {
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    padding: 2rem;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: var(--radius-lg);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    overflow-y: auto;
+}
+
+.start-title {
+    font-size: 3rem;
+    font-weight: bold;
+    color: #FFD700;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+}
+
+.start-subtitle {
+    font-size: 1.2rem;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 2rem;
+}
+
+.start-settings {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.start-settings h3 {
+    color: #FFD700;
+    margin-bottom: 1.5rem;
+    font-size: 1.2rem;
+}
+
+.settings-row {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+.settings-row:last-child {
+    margin-bottom: 0;
+}
+
+.setting-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 120px;
+}
+
+.setting-item label {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.setting-item select {
+    padding: 0.5rem;
+    border-radius: var(--radius-sm);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 0.9rem;
+}
+
+.setting-item select:focus {
+    outline: none;
+    border-color: var(--success-color);
+}
+
+.setting-item select option {
+    background: #333;
+    color: white;
+}
+
+.setting-item input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--success-color);
+    margin: 0 auto;
+}
+
+.start-features {
+    margin-bottom: 2rem;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.feature-item {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1rem;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-sm);
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.start-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.start-buttons .control-btn {
+    min-width: 140px;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .start-screen .overlay-content {
+        width: 95%;
+        max-height: 95vh;
+        padding: 1.5rem;
+        margin: 1rem;
+    }
+    
+    .start-title {
+        font-size: 2.5rem;
+    }
+    
+    .settings-row {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .start-features {
+        grid-template-columns: 1fr;
+        max-width: 400px;
+    }
+    
+    .start-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .start-buttons .control-btn {
+        width: 100%;
+        max-width: 250px;
+    }
+}
+
+@media (max-height: 600px) {
+    .start-screen .overlay-content {
+        max-height: 98vh;
+        padding: 1rem;
+    }
+    
+    .start-title {
+        font-size: 2rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .start-subtitle {
+        font-size: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .start-settings {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .start-features {
+        margin-bottom: 1rem;
+        gap: 0.5rem;
+    }
+    
+    .feature-item {
+        padding: 0.5rem;
+        font-size: 0.9rem;
+    }
 }
 
 /* Effects Container */

@@ -50,7 +50,7 @@ class QuestionBank {
         if (!this.usedQuestions.has(questionId)) {
             this.usedQuestions.add(questionId)
             this.questions = this.questions.filter(qId => qId !== questionId)
-            console.log(`âœ… Question ID ${questionId} marked as used. Remaining: ${this.questions.length}`)
+            console.log(`✅ Question ID ${questionId} marked as used. Remaining: ${this.questions.length}`)
             return true
         } else {
             console.warn(`âš ï¸ Question ID ${questionId} was already marked as used!`)
@@ -260,7 +260,7 @@ class QuestionUI {
      * ENHANCED Handle answer button click with immediate sound feedback
      * @param {string} selectedAnswer - The selected answer letter
      */
-    handleAnswerClick(selectedAnswer) {
+    handleAnswerClick(selectedAnswer, outSideClick = false) {
         if (!this.currentQuestion || !this.currentResolve) return
 
         // Disable all buttons immediately to prevent double-clicking
@@ -270,7 +270,7 @@ class QuestionUI {
         })
 
         // Check if answer is correct
-        const isCorrect = this.currentQuestion.isCorrect(selectedAnswer)
+       const isCorrect = outSideClick ? false : this.currentQuestion.isCorrect(selectedAnswer)
         
         // ENHANCED: Immediate sound feedback
         if (isCorrect && this.soundCallbacks.onCorrect) {
@@ -323,9 +323,9 @@ class QuestionUI {
         
         // ENHANCED: Better feedback messages
         if (isCorrect) {
-            feedbackEl.textContent = 'âœ… Correct! You claimed this cell!'
+            feedbackEl.textContent = '✅ Correct! You claimed this cell!'
         } else {
-            feedbackEl.textContent = 'âŒ Wrong answer! Question remains in this cell for others to try.'
+            feedbackEl.textContent = '❌ Wrong answer! Question remains in this cell for others to try.'
         }
         
         // Add to modal content

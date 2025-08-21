@@ -6,11 +6,12 @@ class Game {
         this.questionBank = new QuestionBank()
         this.questionUI = new QuestionUI()
         
-        this.currentPlayer = this.BOARD.PLAYER1
+        this.currentPlayer = 'X'
         this.lives = {
-            [this.BOARD.PLAYER1]: 3,
-            [this.BOARD.PLAYER2]: 3
+            X: 3,
+            O: 3
         }
+        console.log('🎮 Game constructor: Initial lives set to', this.lives)
         this.isGameActive = false
         this.isPaused = false
         
@@ -76,16 +77,7 @@ class Game {
         }
 
         // UPDATED: Lives elements to work with new player areas
-        this.livesElements = {
-            [this.BOARD.PLAYER1]: {
-                container: document.getElementById('playerXArea'),
-                hearts: document.querySelectorAll('#playerXArea .heart')
-            },
-            [this.BOARD.PLAYER2]: {
-                container: document.getElementById('playerOArea'),
-                hearts: document.querySelectorAll('#playerOArea .heart')
-            }
-        }
+        this.rebindHearts()
 
         // Timer elements
         this.timerElements = {
@@ -106,6 +98,28 @@ class Game {
         // Game containers
         this.gameContainer = document.querySelector('.game-container')
         this.gameBoardElement = document.getElementById('gameBoard')
+    }
+
+    /**
+     * Re-bind hearts after they're recreated by app.js
+     */
+    rebindHearts() {
+        const playerXHearts = document.querySelectorAll('#playerXArea .heart')
+        const playerOHearts = document.querySelectorAll('#playerOArea .heart')
+        
+        console.log('🔗 rebindHearts: Found hearts for X:', playerXHearts.length)
+        console.log('🔗 rebindHearts: Found hearts for O:', playerOHearts.length)
+        
+        this.livesElements = {
+            X: {
+                container: document.getElementById('playerXArea'),
+                hearts: playerXHearts
+            },
+            O: {
+                container: document.getElementById('playerOArea'),
+                hearts: playerOHearts
+            }
+        }
     }
 
     /**
@@ -131,7 +145,12 @@ class Game {
         }
 
         // FIXED: Enhanced keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
+        // Remove any existing keyboard listener to prevent duplicates
+        if (this.keyboardListener) {
+            document.removeEventListener('keydown', this.keyboardListener)
+        }
+        
+        this.keyboardListener = (e) => {
             // Don't interfere when typing in inputs or if modals are open
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || 
                 document.querySelector('.modal.active')) {
@@ -140,13 +159,19 @@ class Game {
 
             if (e.key === ' ') { // Spacebar for pause
                 e.preventDefault()
+                console.log('⌨️ Spacebar pressed - attempting to pause/resume')
                 if (this.isGameActive) {
                     this.togglePause()
+                } else {
+                    console.log('⌨️ Spacebar ignored - game not active')
                 }
             } else if (e.key === 'n' || e.key === 'N') { // N for new game
                 this.startNewGame()
             }
-        })
+        }
+        
+        document.addEventListener('keydown', this.keyboardListener)
+        console.log('⌨️ Keyboard shortcuts bound (spacebar pause, N new game)')
     }
 
     /**
@@ -223,11 +248,13 @@ class Game {
         
         // Reset game state
         this.BOARD.reset()
-        this.currentPlayer = this.BOARD.PLAYER1
-        this.lives = {
-            [this.BOARD.PLAYER1]: 3,
-            [this.BOARD.PLAYER2]: 3
-        }
+        this.currentPlayer = 'X'
+        
+        // Don't reset lives here - they should be set by settings
+        // this.lives will be set by applySettingsToGame() in app.js
+        console.log('🎮 resetGame(): Lives preserved as:', this.lives)
+        console.log('🎮 resetGame(): Lives NOT reset to 3 - using current values')
+        
         this.isGameActive = false
         this.isPaused = false
         this.inputCancelled = false
@@ -260,6 +287,8 @@ class Game {
             })
             return
         }
+        
+
 
         try {
             this.isProcessingMove = true
@@ -354,6 +383,8 @@ class Game {
                 return false
             }
         }
+        
+
 
         try {
             // Show question modal and wait for answer
@@ -446,8 +477,9 @@ class Game {
      */
     continueNextTurn(penalty) {
         if (penalty) {
+            console.log(`💔 ${this.currentPlayer} lost a life! Lives before: ${this.lives[this.currentPlayer]}`)
             this.lives[this.currentPlayer] -= 1
-            console.log(`${this.currentPlayer} has ${this.lives[this.currentPlayer]} lives left.`)
+            console.log(`💔 ${this.currentPlayer} has ${this.lives[this.currentPlayer]} lives left.`)
             
             // Trigger lives change callback
             if (this.onLivesChange) {
@@ -466,6 +498,8 @@ class Game {
             
             // If a player has no lives left, stop the game
             if (this.lives[this.currentPlayer] <= 0) {
+                console.log(`🏁 GAME ENDING: ${this.currentPlayer} has ${this.lives[this.currentPlayer]} lives (≤ 0)`)
+                console.log(`🏁 Current lives state: X=${this.lives.X}, O=${this.lives.O}`)
                 this.isGameActive = false
                 console.log(`${this.currentPlayer} has lost all lives.`)
                 this.switchPlayer()
@@ -474,7 +508,7 @@ class Game {
             }
             
             // Check for stalemate/stuck conditions
-            if (this.BOARD.isGameStuck(this.lives[this.BOARD.PLAYER1], this.lives[this.BOARD.PLAYER2])) {
+            if (this.BOARD.isGameStuck(this.lives.X, this.lives.O)) {
                 this.endGame("Game ended - no more moves possible!")
                 return
             }
@@ -498,7 +532,7 @@ class Game {
      * Switch current player
      */
     switchPlayer() {
-        this.currentPlayer = this.currentPlayer === this.BOARD.PLAYER1 ? this.BOARD.PLAYER2 : this.BOARD.PLAYER1
+        this.currentPlayer = this.currentPlayer === 'X' ? 'O' : 'X'
         if (this.onPlayerChange) {
             this.onPlayerChange(this.currentPlayer)
         }
@@ -610,6 +644,35 @@ class Game {
             this.startTurnTimer(this.pausedTimeRemaining > 0 ? this.pausedTimeRemaining : this.TURN_TIME_LIMIT)
             console.log('▶️ Game resumed - timer resumed from:', this.pausedTimeRemaining)
         }
+        
+        this.updateUI()
+    }
+
+    /**
+     * Pause game programmatically (for modals, etc.)
+     */
+    pauseGame() {
+        if (!this.isGameActive || this.isPaused) return
+        
+        this.isPaused = true
+        this.pauseTimer()
+        this.freezeBoard('paused')
+        console.log('⏸️ Game paused programmatically')
+        
+        this.updateUI()
+    }
+
+    /**
+     * Resume game programmatically (for modals, etc.)
+     */
+    resumeGame() {
+        if (!this.isGameActive || !this.isPaused) return
+        
+        this.isPaused = false
+        this.unfreezeBoard()
+        // Resume with remaining time instead of restarting
+        this.startTurnTimer(this.pausedTimeRemaining > 0 ? this.pausedTimeRemaining : this.TURN_TIME_LIMIT)
+        console.log('▶️ Game resumed programmatically from:', this.pausedTimeRemaining)
         
         this.updateUI()
     }
@@ -738,7 +801,7 @@ class Game {
      * UPDATED: Update lives display with new player area structure
      */
     updateLives() {
-        [this.BOARD.PLAYER1, this.BOARD.PLAYER2].forEach(player => {
+        ['X', 'O'].forEach(player => {
             const livesData = this.livesElements[player]
             if (!livesData || !livesData.hearts) return
 
@@ -820,7 +883,7 @@ class Game {
      * Show feedback for occupied cell
      */
     showCellOccupiedFeedback(row, col, cellValue) {
-        const playerName = cellValue === this.BOARD.PLAYER1 ? 'X' : 'O'
+        const playerName = cellValue === 'X' ? 'X' : 'O'
         console.log(`Cell (${row}, ${col}) is already occupied by ${playerName}. Try again.`)
         
         // Visual feedback
@@ -877,6 +940,14 @@ class Game {
         
         this.updateUI()
     }
+    
+
+    
+
+    
+
+    
+
 }
 
 // Expose Game class for use in other modules

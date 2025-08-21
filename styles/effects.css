@@ -391,6 +391,104 @@
     }
 }
 
+/* Winner Modal Styles */
+.winner-modal .modal-content {
+    max-width: 600px;
+    padding: 2rem;
+    text-align: center;
+}
+
+.winner-header {
+    margin-bottom: 1.5rem;
+}
+
+.winner-title {
+    font-size: var(--font-size-xxl);
+    font-weight: bold;
+    color: #FFD700;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+    margin-bottom: 1rem;
+    animation: winnerGlow 2s ease-in-out infinite alternate;
+}
+
+.winner-message {
+    font-size: var(--font-size-lg);
+    color: white;
+    font-weight: 500;
+}
+
+.winner-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-md);
+}
+
+.winner-stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-sm);
+}
+
+.stat-label {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: var(--font-size-sm);
+}
+
+.stat-value {
+    color: #FFD700;
+    font-weight: bold;
+    font-size: var(--font-size-md);
+}
+
+.winner-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.winner-actions .control-btn {
+    min-width: 140px;
+}
+
+.new-game-btn {
+    background: linear-gradient(45deg, var(--success-color), #2e7d32) !important;
+    border-color: var(--success-color) !important;
+}
+
+.new-game-btn:hover {
+    background: linear-gradient(45deg, #2e7d32, var(--success-color)) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 25px rgba(78, 205, 196, 0.4) !important;
+}
+
+.start-screen-btn {
+    background: linear-gradient(45deg, #9c27b0, #673ab7) !important;
+    border-color: #9c27b0 !important;
+}
+
+.start-screen-btn:hover {
+    background: linear-gradient(45deg, #673ab7, #9c27b0) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 25px rgba(156, 39, 176, 0.4) !important;
+}
+
+@keyframes winnerGlow {
+    0% {
+        text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+    }
+    100% {
+        text-shadow: 0 0 30px rgba(255, 215, 0, 0.8), 0 0 40px rgba(255, 215, 0, 0.3);
+    }
+}
+
 /* Reduced motion preferences */
 @media (prefers-reduced-motion: reduce) {
     *,
